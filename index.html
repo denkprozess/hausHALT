@@ -15,14 +15,14 @@
   // │  PASTE YOUR FIREBASE CONFIG HERE                    │
   // └─────────────────────────────────────────────────────┘
   const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDxVpmZmaJwMgIYYbdyo0iudB3OukYV7kI",
-    authDomain: "haushalt-c9d4c.firebaseapp.com",
-    databaseURL: "https://haushalt-c9d4c-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "haushalt-c9d4c",
-    storageBucket: "haushalt-c9d4c.firebasestorage.app",
-    messagingSenderId: "275403951154",
-    appId: "1:275403951154:web:50103e74d805c19d63802b",
-    measurementId: "G-LT4BJQDQXC"
+  apiKey: "AIzaSyDxVpmZmaJwMgIYYbdyo0iudB3OukYV7kI",
+  authDomain: "haushalt-c9d4c.firebaseapp.com",
+  databaseURL: "https://haushalt-c9d4c-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "haushalt-c9d4c",
+  storageBucket: "haushalt-c9d4c.firebasestorage.app",
+  messagingSenderId: "275403951154",
+  appId: "1:275403951154:web:50103e74d805c19d63802b",
+  measurementId: "G-LT4BJQDQXC"
   };
 
   // ─── Firebase SDK (ESM) ───────────────────────────────
@@ -1135,7 +1135,7 @@ body {
 
     <div class="form-group">
       <label class="form-label">Betrag (€)</label>
-      <input class="form-input" type="number" id="entry-amount-input" placeholder="0,00" min="0.01" step="0.01">
+      <input class="form-input" type="text" inputmode="decimal" id="entry-amount-input" placeholder="0,00" autocomplete="off">
     </div>
     <div class="form-group">
       <label class="form-label">Datum</label>
@@ -1581,7 +1581,8 @@ async function saveEntry() {
   const id = document.getElementById("entry-id").value;
   const type = document.getElementById("entry-type").value;
   const title = document.getElementById("entry-title-input").value.trim();
-  const amount = parseFloat(document.getElementById("entry-amount-input").value);
+  const rawAmount = document.getElementById("entry-amount-input").value.replace(",", ".");
+  const amount = parseFloat(rawAmount);
   const date = document.getElementById("entry-date-input").value;
 
   if (!title) { showToast("Bitte Titel eingeben"); return; }
