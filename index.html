@@ -1,0 +1,2016 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Haushaltsbuch</title>
+
+<!-- ═══════════════════════════════════════════════════════
+     FIREBASE CONFIGURATION
+     Replace the values below with your own Firebase config.
+     Get it from: Firebase Console → Project Settings → Web App
+     ═══════════════════════════════════════════════════════ -->
+<script type="module">
+  // ┌─────────────────────────────────────────────────────┐
+  // │  PASTE YOUR FIREBASE CONFIG HERE                    │
+  // └─────────────────────────────────────────────────────┘
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDxVpmZmaJwMgIYYbdyo0iudB3OukYV7kI",
+    authDomain: "haushalt-c9d4c.firebaseapp.com",
+    databaseURL: "https://haushalt-c9d4c-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "haushalt-c9d4c",
+    storageBucket: "haushalt-c9d4c.firebasestorage.app",
+    messagingSenderId: "275403951154",
+    appId: "1:275403951154:web:50103e74d805c19d63802b",
+    measurementId: "G-LT4BJQDQXC"
+  };
+
+  // ─── Firebase SDK (ESM) ───────────────────────────────
+  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+  const { getDatabase, ref, set, get, update, remove, onValue, off }
+    = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
+
+  // ─── App bootstrap ────────────────────────────────────
+  const firebaseApp = initializeApp(FIREBASE_CONFIG);
+  const db = getDatabase(firebaseApp);
+  window.__FB = { db, ref, set, get, update, remove, onValue, off };
+  window.dispatchEvent(new Event("firebase-ready"));
+</script>
+
+<style>
+/* ═══════════════════════════════════════════════════════
+   DESIGN TOKENS & RESET
+   ═══════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap');
+
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f9f8f5;
+  --border: rgba(0,0,0,0.07);
+  --border2: rgba(0,0,0,0.12);
+  --text: #1a1916;
+  --text2: #6b6760;
+  --text3: #a09d98;
+  --accent: #2d6a4f;
+  --accent-light: #e8f4ee;
+  --accent-mid: #52b788;
+  --warn: #b45309;
+  --warn-light: #fef3c7;
+  --warn-mid: #f59e0b;
+  --danger: #991b1b;
+  --danger-light: #fee2e2;
+  --danger-mid: #ef4444;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+  --radius: 20px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LAYOUT
+   ═══════════════════════════════════════════════════════ */
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 16px env(safe-area-inset-bottom, 24px);
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* ─── Top Bar ────────────────────────────────────────── */
+#top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 8px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(to bottom, var(--bg) 85%, transparent);
+}
+
+#top-bar h1 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+#top-bar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface);
+  color: var(--text2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  font-size: 17px;
+  -webkit-tap-highlight-color: transparent;
+}
+.icon-btn:active { transform: scale(0.92); background: var(--surface2); }
+
+/* ─── Date Header ────────────────────────────────────── */
+#date-header {
+  text-align: center;
+  padding: 20px 0 8px;
+}
+
+#date-header .month-label {
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  line-height: 1;
+}
+
+#date-header .week-label {
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 4px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+#date-header .today-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text2);
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  margin-top: 6px;
+  transition: var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+#date-header .today-btn:hover { background: var(--surface); color: var(--text); }
+#date-header .today-btn:active { transform: scale(0.95); }
+#date-header .today-btn.is-today { color: var(--accent); font-weight: 500; }
+
+/* ─── Main content ───────────────────────────────────── */
+#main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 32px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CARDS
+   ═══════════════════════════════════════════════════════ */
+.budget-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: box-shadow var(--transition-slow);
+}
+
+.card-header {
+  padding: 20px 20px 0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.card-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.card-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-nav-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  transition: var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.card-nav-btn:active { background: var(--surface2); transform: scale(0.9); }
+
+.card-period {
+  font-size: 12px;
+  color: var(--text3);
+  font-weight: 400;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* ─── Budget Display ─────────────────────────────────── */
+.budget-display {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.budget-remaining {
+  font-family: var(--font-display);
+  font-size: 42px;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  transition: color var(--transition-slow);
+}
+
+.budget-remaining.status-ok { color: var(--accent); }
+.budget-remaining.status-warn { color: var(--warn); }
+.budget-remaining.status-danger { color: var(--danger); }
+
+.budget-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding-bottom: 4px;
+}
+
+.budget-meta span {
+  font-size: 12px;
+  color: var(--text3);
+  font-weight: 400;
+}
+
+.budget-meta strong {
+  font-size: 14px;
+  color: var(--text2);
+  font-weight: 500;
+}
+
+/* ─── Progress Bar ───────────────────────────────────── */
+.progress-wrap {
+  margin: 14px 20px 0;
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1), background-color var(--transition-slow);
+}
+.progress-bar.status-ok { background: var(--accent-mid); }
+.progress-bar.status-warn { background: var(--warn-mid); }
+.progress-bar.status-danger { background: var(--danger-mid); }
+
+/* ─── Status Badge ───────────────────────────────────── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  margin-top: 10px;
+  transition: var(--transition-slow);
+}
+.status-badge.status-ok { background: var(--accent-light); color: var(--accent); }
+.status-badge.status-warn { background: var(--warn-light); color: var(--warn); }
+.status-badge.status-danger { background: var(--danger-light); color: var(--danger); }
+
+/* ─── Card Actions ───────────────────────────────────── */
+.card-actions {
+  display: flex;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+}
+
+.btn-primary {
+  flex: 1;
+  height: 42px;
+  background: var(--text);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary:active { transform: scale(0.97); opacity: 0.85; }
+
+.btn-ghost {
+  height: 42px;
+  padding: 0 14px;
+  background: var(--surface2);
+  color: var(--text2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: var(--transition);
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.btn-ghost:active { transform: scale(0.97); background: var(--border); }
+
+/* ─── Entries List ───────────────────────────────────── */
+.card-entries {
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-entries.open { max-height: 2000px; }
+
+.entries-inner {
+  padding: 8px 12px 12px;
+}
+
+.entry-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: var(--radius-xs);
+  transition: background var(--transition);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.entry-item:hover { background: var(--surface2); }
+
+.entry-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent-mid);
+  flex-shrink: 0;
+}
+
+.entry-info { flex: 1; min-width: 0; }
+.entry-title {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+.entry-date {
+  font-size: 12px;
+  color: var(--text3);
+  margin-top: 1px;
+}
+
+.entry-amount {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.entry-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.entry-item:hover .entry-actions,
+.entry-item:focus .entry-actions { opacity: 1; }
+
+.entry-btn {
+  width: 28px; height: 28px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  transition: background var(--transition);
+  color: var(--text2);
+  -webkit-tap-highlight-color: transparent;
+}
+.entry-btn:hover { background: var(--border); }
+.entry-btn.delete:hover { background: var(--danger-light); color: var(--danger); }
+
+.empty-state {
+  text-align: center;
+  padding: 28px 16px;
+  color: var(--text3);
+  font-size: 13px;
+}
+.empty-state .empty-icon { font-size: 28px; margin-bottom: 8px; }
+
+/* ─── Swipe indicator ────────────────────────────────── */
+.card-swipe-hint {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text3);
+  padding-bottom: 8px;
+  letter-spacing: 0.03em;
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODAL / BOTTOM SHEET
+   ═══════════════════════════════════════════════════════ */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  opacity: 0;
+  transition: opacity var(--transition-slow);
+  pointer-events: none;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+
+.sheet {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--surface);
+  border-radius: var(--radius) var(--radius) 0 0;
+  z-index: 201;
+  transform: translateY(100%);
+  transition: transform var(--transition-slow);
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+  max-height: 90dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.sheet.open { transform: translateY(0); }
+
+.sheet-handle {
+  width: 36px; height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 12px auto 4px;
+}
+
+.sheet-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  padding: 12px 24px 4px;
+  color: var(--text);
+}
+
+.sheet-body {
+  padding: 16px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.form-input, .form-select {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1.5px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--text);
+  background: var(--surface);
+  outline: none;
+  transition: border-color var(--transition);
+  -webkit-appearance: none;
+}
+.form-input:focus, .form-select:focus {
+  border-color: var(--text);
+}
+
+.form-input[type="number"] { -moz-appearance: textfield; }
+.form-input[type="number"]::-webkit-outer-spin-button,
+.form-input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.sheet-actions {
+  display: flex;
+  gap: 10px;
+  padding: 0 24px 8px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   HOUSEHOLD KEY SCREEN
+   ═══════════════════════════════════════════════════════ */
+#key-screen {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  gap: 24px;
+  transition: opacity var(--transition-slow), transform var(--transition-slow);
+}
+#key-screen.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-20px);
+}
+
+#key-screen .key-logo {
+  font-family: var(--font-display);
+  font-size: 52px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-align: center;
+  color: var(--text);
+}
+#key-screen .key-logo em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+#key-screen p {
+  color: var(--text2);
+  font-size: 15px;
+  text-align: center;
+  line-height: 1.55;
+  max-width: 300px;
+}
+
+#key-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+}
+
+#key-input {
+  height: 52px;
+  padding: 0 18px;
+  border: 2px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 17px;
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: var(--text);
+  background: var(--surface);
+  outline: none;
+  transition: border-color var(--transition);
+  width: 100%;
+}
+#key-input:focus { border-color: var(--text); }
+
+#key-submit {
+  height: 52px;
+  background: var(--text);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+#key-submit:active { opacity: 0.8; transform: scale(0.98); }
+
+.key-hint {
+  font-size: 12px;
+  color: var(--text3);
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SETTINGS PANEL
+   ═══════════════════════════════════════════════════════ */
+#settings-panel {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 250;
+  transform: translateX(100%);
+  transition: transform var(--transition-slow);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#settings-panel.open { transform: translateX(0); }
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+}
+
+.settings-header h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+  flex: 1;
+}
+
+.settings-body {
+  padding: 8px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.settings-section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.settings-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 16px;
+}
+
+.settings-info {
+  font-size: 13px;
+  color: var(--text2);
+  background: var(--surface2);
+  border-radius: var(--radius-xs);
+  padding: 10px 12px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.settings-row:last-child { border-bottom: none; }
+
+.settings-row-label { font-size: 14px; color: var(--text); }
+.settings-row-value { font-size: 14px; color: var(--text2); font-weight: 500; }
+
+.household-key-display {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  font-family: monospace;
+}
+
+/* ─── PIN overlay ────────────────────────────────────── */
+#pin-overlay {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 260;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  transform: translateX(100%);
+  transition: transform var(--transition-slow);
+}
+#pin-overlay.open { transform: translateX(0); }
+
+.pin-title { font-family: var(--font-display); font-size: 26px; color: var(--text); }
+.pin-dots {
+  display: flex; gap: 12px;
+}
+.pin-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border2);
+  transition: background var(--transition);
+}
+.pin-dot.filled { background: var(--text); border-color: var(--text); }
+
+.pin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 240px;
+}
+
+.pin-key {
+  height: 60px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  font-family: var(--font-body);
+  font-size: 22px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+}
+.pin-key:active { background: var(--surface2); transform: scale(0.94); }
+.pin-key.backspace { font-size: 18px; }
+.pin-error { color: var(--danger); font-size: 13px; }
+
+/* ═══════════════════════════════════════════════════════
+   LOADING & SYNC
+   ═══════════════════════════════════════════════════════ */
+.sync-indicator {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent-mid);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+#loading-overlay {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  transition: opacity 500ms;
+}
+#loading-overlay.fade-out { opacity: 0; pointer-events: none; }
+
+.loading-spinner {
+  width: 36px; height: 36px;
+  border: 2.5px solid var(--border2);
+  border-top-color: var(--text);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-label {
+  font-size: 13px;
+  color: var(--text3);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+/* ─── Toast ──────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--text);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 500;
+  opacity: 0;
+  transition: opacity 250ms, transform 250ms;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ─── Divider in entries ─────────────────────────────── */
+.entries-date-divider {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 10px 8px 4px;
+}
+
+/* ─── Touch swipe visual feedback ───────────────────── */
+.card-swipe-wrap {
+  touch-action: pan-y;
+  user-select: none;
+}
+
+/* ─── Shop Chips ─────────────────────────────────────────────────── */
+.chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border2);
+  background: var(--surface);
+  color: var(--text2);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.chip:active { transform: scale(0.94); }
+.chip.selected {
+  background: var(--text);
+  color: #fff;
+  border-color: var(--text);
+}
+.chip[data-custom="true"].selected {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+#title-group.visible {
+  display: flex !important;
+  animation: slideDown 200ms cubic-bezier(0.4,0,0.2,1) both;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Firebase offline notice ────────────────────────── */
+.offline-notice {
+  background: var(--warn-light);
+  color: var(--warn);
+  text-align: center;
+  font-size: 12px;
+  padding: 6px 16px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  display: none;
+}
+.offline-notice.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-label">Haushaltsbuch lädt…</div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Household Key Screen -->
+<div id="key-screen">
+  <div class="key-logo">Haus<em>halt</em></div>
+  <p>Gebt euren gemeinsamen Haushaltsschlüssel ein, um loszulegen.</p>
+  <div id="key-input-wrap">
+    <input id="key-input" type="text" placeholder="z. B. familie2024"
+           maxlength="40" autocomplete="off" spellcheck="false">
+    <button id="key-submit">Starten →</button>
+  </div>
+  <div class="key-hint">Der Schlüssel verbindet beide Geräte mit denselben Daten.<br>Klein, einfach, privat.</div>
+</div>
+
+<!-- Main App -->
+<div id="app" style="display:none">
+  <div class="offline-notice" id="offline-notice">⚠ Keine Verbindung – Änderungen werden synchronisiert sobald du online bist</div>
+
+  <!-- Top Bar -->
+  <div id="top-bar">
+    <h1>Haushalt<em style="font-family:var(--font-display);font-style:italic;color:var(--accent)">buch</em></h1>
+    <div id="top-bar-actions">
+      <div class="sync-indicator" id="sync-dot" title="Synchronisiert"></div>
+      <button class="icon-btn" id="settings-btn" title="Einstellungen">⚙</button>
+    </div>
+  </div>
+
+  <!-- Date Header -->
+  <div id="date-header">
+    <div class="month-label" id="header-month">April 2025</div>
+    <div class="week-label" id="header-week">KW 14 · 31. Mrz – 6. Apr</div>
+    <button class="today-btn" id="today-btn">
+      <span>📅</span>
+      <span id="today-label">Heute, 4. April</span>
+    </button>
+  </div>
+
+  <!-- Main Cards -->
+  <div id="main-content">
+
+    <!-- ── Week Card ── -->
+    <div class="budget-card" id="week-card">
+      <div class="card-header card-swipe-wrap" id="week-header">
+        <div class="card-title-row">
+          <span class="card-title">Wochenbudget</span>
+          <div class="card-nav">
+            <button class="card-nav-btn" id="week-prev">‹</button>
+            <span class="card-period" id="week-period">KW 14</span>
+            <button class="card-nav-btn" id="week-next">›</button>
+          </div>
+        </div>
+        <div class="budget-display">
+          <div class="budget-remaining status-ok" id="week-remaining">0,00 €</div>
+          <div class="budget-meta">
+            <span>Gesamt</span>
+            <strong id="week-total-budget">0,00 €</strong>
+            <span>Ausgaben</span>
+            <strong id="week-spent">0,00 €</strong>
+          </div>
+        </div>
+        <div class="status-badge status-ok" id="week-badge">✓ Im Rahmen</div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar status-ok" id="week-progress" style="width:0%"></div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-primary" id="week-add-btn">+ Einkauf</button>
+        <button class="btn-ghost" id="week-toggle-btn">📋 Liste</button>
+      </div>
+      <div class="card-entries" id="week-entries">
+        <div class="entries-inner" id="week-entries-inner">
+          <div class="empty-state"><div class="empty-icon">🛒</div>Noch keine Einkäufe diese Woche</div>
+        </div>
+      </div>
+      <div class="card-swipe-hint">← Swipe zum Wechseln →</div>
+    </div>
+
+    <!-- ── Month Card ── -->
+    <div class="budget-card" id="month-card">
+      <div class="card-header card-swipe-wrap" id="month-header">
+        <div class="card-title-row">
+          <span class="card-title">Monatsbudget</span>
+          <div class="card-nav">
+            <button class="card-nav-btn" id="month-prev">‹</button>
+            <span class="card-period" id="month-period">April</span>
+            <button class="card-nav-btn" id="month-next">›</button>
+          </div>
+        </div>
+        <div class="budget-display">
+          <div class="budget-remaining status-ok" id="month-remaining">0,00 €</div>
+          <div class="budget-meta">
+            <span>Gesamt</span>
+            <strong id="month-total-budget">0,00 €</strong>
+            <span>Ausgaben</span>
+            <strong id="month-spent">0,00 €</strong>
+          </div>
+        </div>
+        <div class="status-badge status-ok" id="month-badge">✓ Im Rahmen</div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar status-ok" id="month-progress" style="width:0%"></div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-primary" id="month-add-btn">+ Ausgabe</button>
+        <button class="btn-ghost" id="month-toggle-btn">📋 Liste</button>
+      </div>
+      <div class="card-entries" id="month-entries">
+        <div class="entries-inner" id="month-entries-inner">
+          <div class="empty-state"><div class="empty-icon">🛍</div>Noch keine Ausgaben diesen Monat</div>
+        </div>
+      </div>
+      <div class="card-swipe-hint">← Swipe zum Wechseln →</div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /app -->
+
+<!-- Settings Panel -->
+<div id="settings-panel">
+  <div class="settings-header">
+    <button class="icon-btn" id="settings-close">✕</button>
+    <h2>Einstellungen</h2>
+  </div>
+  <div class="settings-body">
+
+    <div class="settings-section">
+      <div class="settings-section-title">Standardbudgets</div>
+      <div class="settings-info">Änderungen gelten nur für <strong>zukünftige</strong> Zeiträume. Laufende Wochen und Monate bleiben unverändert.</div>
+      <div class="form-group">
+        <label class="form-label">Wochenbudget (€)</label>
+        <input class="form-input" type="number" id="setting-week-budget" min="0" step="10" placeholder="z. B. 200">
+      </div>
+      <div style="height:12px"></div>
+      <div class="form-group">
+        <label class="form-label">Monatsbudget (€)</label>
+        <input class="form-input" type="number" id="setting-month-budget" min="0" step="10" placeholder="z. B. 100">
+      </div>
+      <div style="height:16px"></div>
+      <button class="btn-primary" id="save-settings-btn" style="width:100%">Einstellungen speichern</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Aktuelle Werte</div>
+      <div class="settings-row">
+        <span class="settings-row-label">Standard Wochenbudget</span>
+        <span class="settings-row-value" id="current-week-budget-display">—</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-row-label">Standard Monatsbudget</span>
+        <span class="settings-row-value" id="current-month-budget-display">—</span>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Haushalt</div>
+      <div class="settings-row">
+        <span class="settings-row-label">Schlüssel</span>
+        <span class="household-key-display" id="household-key-display">—</span>
+      </div>
+      <div style="height:14px"></div>
+      <button class="btn-ghost" id="change-key-btn" style="width:100%">🔑 Schlüssel ändern</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- PIN Overlay (for settings) -->
+<div id="pin-overlay">
+  <div class="pin-title">PIN eingeben</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+  <div class="pin-grid" id="pin-grid"></div>
+  <button class="btn-ghost" id="pin-cancel">Abbrechen</button>
+</div>
+
+<!-- Overlay backdrop -->
+<div class="overlay" id="sheet-overlay"></div>
+
+<!-- Entry Sheet (add/edit) -->
+<div class="sheet" id="entry-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="entry-sheet-title">Einkauf hinzufügen</div>
+  <div class="sheet-body">
+    <input type="hidden" id="entry-id">
+    <input type="hidden" id="entry-type">
+
+    <!-- Quick select chips -->
+    <div class="form-group" id="chips-group">
+      <label class="form-label">Wo eingekauft?</label>
+      <div class="chips-wrap" id="shop-chips">
+        <button class="chip" data-value="Famila">Famila</button>
+        <button class="chip" data-value="Combi">Combi</button>
+        <button class="chip" data-value="Netto">Netto</button>
+        <button class="chip" data-value="Rewe">Rewe</button>
+        <button class="chip" data-value="Lidl">Lidl</button>
+        <button class="chip" data-value="Aldi">Aldi</button>
+        <button class="chip" data-value="Amazon">Amazon</button>
+        <button class="chip" data-value="Tedi">Tedi</button>
+        <button class="chip" data-value="Sonstige" data-custom="true">Sonstige…</button>
+      </div>
+    </div>
+
+    <!-- Custom title – only shown when "Sonstige" selected or editing -->
+    <div class="form-group" id="title-group" style="display:none">
+      <label class="form-label">Titel / Beschreibung</label>
+      <input class="form-input" type="text" id="entry-title-input" placeholder="z. B. Baumarkt, Apotheke…" autocomplete="off">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Betrag (€)</label>
+      <input class="form-input" type="number" id="entry-amount-input" placeholder="0,00" min="0.01" step="0.01">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Datum</label>
+      <input class="form-input" type="date" id="entry-date-input">
+    </div>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn-ghost" id="entry-cancel-btn">Abbrechen</button>
+    <button class="btn-primary" id="entry-save-btn" style="flex:1">Speichern</button>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   HAUSHALTSBUCH – VANILLA JS
+   ═══════════════════════════════════════════════════════
+   Structure:
+   1. Config & State
+   2. Date Utilities
+   3. Budget Logic
+   4. Firebase Data Access
+   5. UI Rendering
+   6. Event Handling
+   7. Init
+   ═══════════════════════════════════════════════════════ */
+
+/* ──────────────────────────────────────────────────────
+   1. CONFIG & STATE
+   ────────────────────────────────────────────────────── */
+const DEMO_MODE = false; // set true if no Firebase config yet
+const PIN = "1234"; // simple 4-digit PIN for settings (change as desired)
+const SETTINGS_PIN_ENABLED = true; // set false to disable PIN
+
+let householdKey = "";
+let fbListeners = []; // tracked Firebase listeners for cleanup
+
+// UI state
+let state = {
+  currentWeekStart: null, // Monday of displayed week (Date)
+  currentMonthKey: "",    // "YYYY-MM"
+  weekEntriesOpen: false,
+  monthEntriesOpen: false,
+};
+
+// Data cache (populated from Firebase)
+let data = {
+  settings: { weeklyBudgetDefault: 200, monthlyBudgetDefault: 100 },
+  weeks: {},   // weekKey → { budget, startDate, endDate, entries: {} }
+  months: {},  // monthKey → { budget, month, entries: {} }
+};
+
+/* ──────────────────────────────────────────────────────
+   2. DATE UTILITIES
+   ────────────────────────────────────────────────────── */
+const pad = n => String(n).padStart(2,"0");
+
+function getMonday(d) {
+  const dt = new Date(d);
+  const day = dt.getDay();
+  const diff = (day === 0 ? -6 : 1 - day);
+  dt.setDate(dt.getDate() + diff);
+  dt.setHours(0,0,0,0);
+  return dt;
+}
+
+function addDays(d, n) {
+  const dt = new Date(d);
+  dt.setDate(dt.getDate() + n);
+  return dt;
+}
+
+function addWeeks(d, n) { return addDays(d, n * 7); }
+
+function addMonths(d, n) {
+  const dt = new Date(d);
+  dt.setMonth(dt.getMonth() + n);
+  return dt;
+}
+
+// weekKey = "YYYY-WXX" (ISO week)
+function getWeekKey(monday) {
+  const y = monday.getFullYear();
+  const jan1 = new Date(y, 0, 1);
+  const week = Math.ceil(((monday - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return `${y}-W${pad(week)}`;
+}
+
+function getMonthKey(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+}
+
+function formatDate(d, opts={}) {
+  return new Date(d).toLocaleDateString("de-DE", { day:"numeric", month:"short", ...opts });
+}
+
+function formatMoney(n) {
+  return Number(n).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+}
+
+function formatMoneyInput(n) {
+  return Number(n).toFixed(2);
+}
+
+function isoDate(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function parseIso(s) {
+  const [y,m,d] = s.split("-").map(Number);
+  return new Date(y, m-1, d);
+}
+
+function getWeekCW(monday) {
+  const jan1 = new Date(monday.getFullYear(), 0, 1);
+  return Math.ceil(((monday - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+}
+
+function weekRangeLabel(monday) {
+  const sun = addDays(monday, 6);
+  const cw = getWeekCW(monday);
+  return `KW ${cw} · ${formatDate(monday)} – ${formatDate(sun)}`;
+}
+
+function monthLabelLong(monthKey) {
+  const [y,m] = monthKey.split("-").map(Number);
+  return new Date(y,m-1,1).toLocaleDateString("de-DE", { month:"long", year:"numeric" });
+}
+
+function monthLabelShort(monthKey) {
+  const [y,m] = monthKey.split("-").map(Number);
+  return new Date(y,m-1,1).toLocaleDateString("de-DE", { month:"long" });
+}
+
+function getLastWeekOfMonth(monthKey) {
+  const [y,m] = monthKey.split("-").map(Number);
+  const lastDay = new Date(y, m, 0); // last day of month
+  return getMonday(lastDay);
+}
+
+/* ──────────────────────────────────────────────────────
+   3. BUDGET LOGIC
+   ────────────────────────────────────────────────────── */
+function calcStatus(remaining, total) {
+  if (total <= 0) return "ok";
+  const pct = remaining / total;
+  if (remaining <= 0) return "danger";
+  if (pct <= 0.20) return "warn";
+  return "ok";
+}
+
+function statusLabel(remaining, total) {
+  const s = calcStatus(remaining, total);
+  if (s === "danger") return "⚠ Überzogen";
+  if (s === "warn")   return "⚡ Fast aufgebraucht";
+  return "✓ Im Rahmen";
+}
+
+function sumEntries(entries) {
+  if (!entries) return 0;
+  return Object.values(entries).reduce((acc, e) => acc + Number(e.amount||0), 0);
+}
+
+// Ensure week exists in data (create if missing)
+function ensureWeek(weekKey, monday) {
+  if (!data.weeks[weekKey]) {
+    data.weeks[weekKey] = {
+      budget: data.settings.weeklyBudgetDefault,
+      startDate: isoDate(monday),
+      endDate: isoDate(addDays(monday, 6)),
+      entries: {}
+    };
+  }
+}
+
+// Ensure month exists in data
+function ensureMonth(monthKey) {
+  if (!data.months[monthKey]) {
+    data.months[monthKey] = {
+      budget: data.settings.monthlyBudgetDefault,
+      month: monthKey,
+      entries: {}
+    };
+  }
+}
+
+/* ──────────────────────────────────────────────────────
+   4. FIREBASE DATA ACCESS
+   ────────────────────────────────────────────────────── */
+function dbPath(...parts) {
+  return `households/${householdKey}/${parts.join("/")}`;
+}
+
+function fbRef(path) {
+  return window.__FB.ref(window.__FB.db, path);
+}
+
+async function fbSet(path, value) {
+  if (DEMO_MODE) return;
+  return window.__FB.set(fbRef(dbPath(path)), value);
+}
+
+async function fbGet(path) {
+  if (DEMO_MODE) return null;
+  const snap = await window.__FB.get(fbRef(dbPath(path)));
+  return snap.exists() ? snap.val() : null;
+}
+
+async function fbRemove(path) {
+  if (DEMO_MODE) return;
+  return window.__FB.remove(fbRef(dbPath(path)));
+}
+
+// Subscribe to real-time updates
+function fbListen(path, cb) {
+  if (DEMO_MODE) return () => {};
+  const r = fbRef(dbPath(path));
+  window.__FB.onValue(r, snap => cb(snap.exists() ? snap.val() : null));
+  fbListeners.push({ r });
+  return () => window.__FB.off(r);
+}
+
+function stopAllListeners() {
+  fbListeners.forEach(({ r }) => window.__FB.off(r));
+  fbListeners = [];
+}
+
+// Load & subscribe to all household data
+function subscribeHousehold() {
+  stopAllListeners();
+  fbListen("settings", val => {
+    if (val) {
+      data.settings = { ...data.settings, ...val };
+      updateSettingsDisplay();
+    }
+    renderAll();
+  });
+  fbListen("weeks", val => {
+    data.weeks = val || {};
+    renderWeekCard();
+  });
+  fbListen("months", val => {
+    data.months = val || {};
+    renderMonthCard();
+  });
+}
+
+/* ──────────────────────────────────────────────────────
+   5. UI RENDERING
+   ────────────────────────────────────────────────────── */
+function renderAll() {
+  renderDateHeader();
+  renderWeekCard();
+  renderMonthCard();
+}
+
+function renderDateHeader() {
+  const today = new Date();
+  const mk = state.currentMonthKey;
+  const monday = state.currentWeekStart;
+  const isToday = isoDate(today) === isoDate(today); // always true; highlight if viewing now
+
+  const viewingToday = getMonthKey(today) === mk &&
+    getWeekKey(getMonday(today)) === getWeekKey(monday);
+
+  document.getElementById("header-month").textContent = monthLabelLong(mk);
+  document.getElementById("header-week").textContent = weekRangeLabel(monday);
+
+  const todayLabel = document.getElementById("today-label");
+  todayLabel.textContent = `Heute, ${formatDate(today, { day:"numeric", month:"long" })}`;
+  document.getElementById("today-btn").classList.toggle("is-today", viewingToday);
+  document.getElementById("week-period").textContent = `KW ${getWeekCW(monday)}`;
+  document.getElementById("month-period").textContent = monthLabelShort(mk);
+}
+
+function renderWeekCard() {
+  const monday = state.currentWeekStart;
+  const weekKey = getWeekKey(monday);
+  ensureWeek(weekKey, monday);
+  const week = data.weeks[weekKey];
+
+  const spent = sumEntries(week.entries);
+  const budget = week.budget;
+  const remaining = budget - spent;
+  const status = calcStatus(remaining, budget);
+  const pct = budget > 0 ? Math.min(100, Math.max(0, (spent / budget) * 100)) : 0;
+
+  setStatus("week", remaining, budget, status, pct, spent);
+
+  // Entries
+  const entries = week.entries || {};
+  renderEntries("week-entries-inner", entries, "weekly");
+}
+
+function renderMonthCard() {
+  const mk = state.currentMonthKey;
+  ensureMonth(mk);
+  const month = data.months[mk];
+
+  const spent = sumEntries(month.entries);
+  const budget = month.budget;
+  const remaining = budget - spent;
+  const status = calcStatus(remaining, budget);
+  const pct = budget > 0 ? Math.min(100, Math.max(0, (spent / budget) * 100)) : 0;
+
+  setStatus("month", remaining, budget, status, pct, spent);
+  renderEntries("month-entries-inner", month.entries || {}, "monthly");
+}
+
+function setStatus(prefix, remaining, budget, status, pct, spent) {
+  document.getElementById(`${prefix}-remaining`).textContent = formatMoney(remaining);
+  document.getElementById(`${prefix}-remaining`).className = `budget-remaining status-${status}`;
+  document.getElementById(`${prefix}-total-budget`).textContent = formatMoney(budget);
+  document.getElementById(`${prefix}-spent`).textContent = formatMoney(spent);
+  document.getElementById(`${prefix}-badge`).textContent = statusLabel(remaining, budget);
+  document.getElementById(`${prefix}-badge`).className = `status-badge status-${status}`;
+  document.getElementById(`${prefix}-progress`).style.width = `${pct}%`;
+  document.getElementById(`${prefix}-progress`).className = `progress-bar status-${status}`;
+}
+
+function renderEntries(containerId, entries, type) {
+  const container = document.getElementById(containerId);
+  const list = Object.values(entries).sort((a,b) => b.date.localeCompare(a.date));
+
+  if (list.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">${type==="weekly"?"🛒":"🛍"}</div>${type==="weekly"?"Noch keine Einkäufe":"Noch keine Ausgaben"}</div>`;
+    return;
+  }
+
+  let html = "";
+  let lastDate = "";
+  for (const e of list) {
+    if (e.date !== lastDate) {
+      lastDate = e.date;
+      html += `<div class="entries-date-divider">${formatDate(e.date, { weekday:"short", day:"numeric", month:"short" })}</div>`;
+    }
+    html += `
+      <div class="entry-item" data-id="${e.id}" data-type="${type}">
+        <div class="entry-dot"></div>
+        <div class="entry-info">
+          <div class="entry-title">${escHtml(e.title)}</div>
+          <div class="entry-date">${formatDate(e.date, { day:"numeric", month:"short" })}</div>
+        </div>
+        <div class="entry-amount">${formatMoney(e.amount)}</div>
+        <div class="entry-actions">
+          <button class="entry-btn edit" title="Bearbeiten" data-id="${e.id}" data-type="${type}">✎</button>
+          <button class="entry-btn delete" title="Löschen" data-id="${e.id}" data-type="${type}">✕</button>
+        </div>
+      </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function updateSettingsDisplay() {
+  const s = data.settings;
+  document.getElementById("current-week-budget-display").textContent = formatMoney(s.weeklyBudgetDefault);
+  document.getElementById("current-month-budget-display").textContent = formatMoney(s.monthlyBudgetDefault);
+  document.getElementById("setting-week-budget").placeholder = s.weeklyBudgetDefault;
+  document.getElementById("setting-month-budget").placeholder = s.monthlyBudgetDefault;
+  document.getElementById("household-key-display").textContent = householdKey;
+}
+
+/* ──────────────────────────────────────────────────────
+   6. EVENT HANDLING
+   ────────────────────────────────────────────────────── */
+
+// ── Sheet helpers ─────────────────────────────────────
+function openSheet() {
+  document.getElementById("sheet-overlay").classList.add("open");
+  document.getElementById("entry-sheet").classList.add("open");
+  setTimeout(() => document.getElementById("entry-title-input").focus(), 350);
+}
+
+function closeSheet() {
+  document.getElementById("sheet-overlay").classList.remove("open");
+  document.getElementById("entry-sheet").classList.remove("open");
+}
+
+// Preset shops (weekly) vs generic (monthly)
+const WEEKLY_CHIPS = ["Famila","Combi","Netto","Rewe","Lidl","Aldi","Amazon","Tedi","Sonstige"];
+const MONTHLY_CHIPS = ["Amazon","Tedi","Sonstige"];
+
+function resetChips() {
+  document.querySelectorAll("#shop-chips .chip").forEach(c => c.classList.remove("selected"));
+  document.getElementById("title-group").classList.remove("visible");
+  document.getElementById("title-group").style.display = "none";
+  document.getElementById("entry-title-input").value = "";
+}
+
+function selectChip(value) {
+  document.querySelectorAll("#shop-chips .chip").forEach(c => {
+    c.classList.toggle("selected", c.dataset.value === value);
+  });
+  const isSonstige = value === "Sonstige";
+  const tg = document.getElementById("title-group");
+  if (isSonstige) {
+    tg.style.display = "";
+    tg.classList.add("visible");
+    setTimeout(() => document.getElementById("entry-title-input").focus(), 50);
+  } else {
+    tg.classList.remove("visible");
+    tg.style.display = "none";
+    document.getElementById("entry-title-input").value = value;
+  }
+}
+
+function openAddEntry(type) {
+  document.getElementById("entry-id").value = "";
+  document.getElementById("entry-type").value = type;
+  document.getElementById("entry-amount-input").value = "";
+  document.getElementById("entry-date-input").value = isoDate(new Date());
+  document.getElementById("entry-sheet-title").textContent = type === "weekly" ? "Einkauf hinzufügen" : "Ausgabe hinzufügen";
+  // Show chips group, reset state
+  document.getElementById("chips-group").style.display = "";
+  resetChips();
+  openSheet();
+}
+
+function openEditEntry(id, type) {
+  const entries = type === "weekly"
+    ? (data.weeks[getWeekKey(state.currentWeekStart)]?.entries || {})
+    : (data.months[state.currentMonthKey]?.entries || {});
+  const e = entries[id];
+  if (!e) return;
+  document.getElementById("entry-id").value = id;
+  document.getElementById("entry-type").value = type;
+  document.getElementById("entry-amount-input").value = formatMoneyInput(e.amount);
+  document.getElementById("entry-date-input").value = e.date;
+  document.getElementById("entry-sheet-title").textContent = "Eintrag bearbeiten";
+  // In edit mode: hide chips, show title directly
+  document.getElementById("chips-group").style.display = "none";
+  const tg = document.getElementById("title-group");
+  tg.style.display = "";
+  tg.classList.add("visible");
+  document.getElementById("entry-title-input").value = e.title;
+  openSheet();
+}
+
+async function saveEntry() {
+  const id = document.getElementById("entry-id").value;
+  const type = document.getElementById("entry-type").value;
+  const title = document.getElementById("entry-title-input").value.trim();
+  const amount = parseFloat(document.getElementById("entry-amount-input").value);
+  const date = document.getElementById("entry-date-input").value;
+
+  if (!title) { showToast("Bitte Titel eingeben"); return; }
+  if (!amount || amount <= 0) { showToast("Bitte gültigen Betrag eingeben"); return; }
+  if (!date) { showToast("Bitte Datum wählen"); return; }
+
+  const now = new Date().toISOString();
+  const entryId = id || ("e" + Date.now());
+
+  const entry = {
+    id: entryId, type, title,
+    amount: Number(amount),
+    date,
+    createdAt: id ? (getExistingCreatedAt(id, type) || now) : now,
+    ...(id ? { updatedAt: now } : {})
+  };
+
+  try {
+    if (type === "weekly") {
+      const monday = state.currentWeekStart;
+      const weekKey = getWeekKey(monday);
+      // Always ensure the week scaffold exists in Firebase with defined values
+      const existsInFb = !!(await fbGet(`weeks/${weekKey}/budget`));
+      if (!existsInFb) {
+        const budget = Number(data.settings.weeklyBudgetDefault) || 200;
+        await fbSet(`weeks/${weekKey}`, {
+          budget,
+          startDate: isoDate(monday),
+          endDate: isoDate(addDays(monday, 6)),
+          entries: {}
+        });
+      }
+      await fbSet(`weeks/${weekKey}/entries/${entryId}`, entry);
+    } else {
+      const mk = state.currentMonthKey;
+      // Always ensure the month scaffold exists in Firebase with defined values
+      const existsInFb = !!(await fbGet(`months/${mk}/budget`));
+      if (!existsInFb) {
+        const budget = Number(data.settings.monthlyBudgetDefault) || 100;
+        await fbSet(`months/${mk}`, {
+          budget,
+          month: mk,
+          entries: {}
+        });
+      }
+      await fbSet(`months/${mk}/entries/${entryId}`, entry);
+    }
+
+    closeSheet();
+    showToast(id ? "Eintrag aktualisiert" : "Eintrag gespeichert");
+  } catch(err) {
+    showToast("Fehler beim Speichern");
+    console.error(err);
+  }
+}
+
+function getExistingCreatedAt(id, type) {
+  const entries = type === "weekly"
+    ? data.weeks[getWeekKey(state.currentWeekStart)]?.entries
+    : data.months[state.currentMonthKey]?.entries;
+  return entries?.[id]?.createdAt;
+}
+
+async function deleteEntry(id, type) {
+  if (!confirm("Eintrag wirklich löschen?")) return;
+  let path;
+  if (type === "weekly") {
+    path = `weeks/${getWeekKey(state.currentWeekStart)}/entries/${id}`;
+  } else {
+    path = `months/${state.currentMonthKey}/entries/${id}`;
+  }
+  try {
+    await fbRemove(path);
+    showToast("Eintrag gelöscht");
+  } catch(err) {
+    showToast("Fehler beim Löschen");
+  }
+}
+
+// ── Navigation ────────────────────────────────────────
+function goToWeek(monday) {
+  state.currentWeekStart = monday;
+  // Sync month card to the month where most of this week falls
+  // (use the Wednesday of the week as representative day)
+  const wed = addDays(monday, 2);
+  state.currentMonthKey = getMonthKey(wed);
+  renderAll();
+  saveUIState();
+}
+
+function goToMonth(mk) {
+  state.currentMonthKey = mk;
+  // When navigating months, jump week to last week of that month
+  const today = new Date();
+  if (mk === getMonthKey(today)) {
+    state.currentWeekStart = getMonday(today);
+  } else {
+    state.currentWeekStart = getLastWeekOfMonth(mk);
+  }
+  renderAll();
+  saveUIState();
+}
+
+function saveUIState() {
+  localStorage.setItem("ui_weekStart", isoDate(state.currentWeekStart));
+  localStorage.setItem("ui_monthKey", state.currentMonthKey);
+}
+
+// ── Swipe handling ────────────────────────────────────
+function addSwipe(el, onLeft, onRight) {
+  let startX = 0, startY = 0;
+  el.addEventListener("touchstart", e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  el.addEventListener("touchend", e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) onLeft();
+      else onRight();
+    }
+  }, { passive: true });
+}
+
+// ── Toast ─────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2800);
+}
+
+// ── Settings ──────────────────────────────────────────
+let pinBuffer = "";
+let pinTarget = null; // function to call after correct PIN
+
+function openSettingsWithPin() {
+  if (!SETTINGS_PIN_ENABLED) {
+    openSettings();
+    return;
+  }
+  pinBuffer = "";
+  pinTarget = openSettings;
+  updatePinDots();
+  document.getElementById("pin-error").textContent = "";
+  document.getElementById("pin-overlay").classList.add("open");
+}
+
+function openSettings() {
+  document.getElementById("pin-overlay").classList.remove("open");
+  document.getElementById("settings-panel").classList.add("open");
+  document.getElementById("setting-week-budget").value = "";
+  document.getElementById("setting-month-budget").value = "";
+  updateSettingsDisplay();
+}
+
+async function saveSettings() {
+  const wb = parseFloat(document.getElementById("setting-week-budget").value);
+  const mb = parseFloat(document.getElementById("setting-month-budget").value);
+  if (isNaN(wb) && isNaN(mb)) { showToast("Bitte mindestens einen Wert eingeben"); return; }
+
+  const updates = { ...data.settings };
+  if (!isNaN(wb) && wb > 0) updates.weeklyBudgetDefault = wb;
+  if (!isNaN(mb) && mb > 0) updates.monthlyBudgetDefault = mb;
+
+  try {
+    await fbSet("settings", updates);
+    data.settings = updates;
+    updateSettingsDisplay();
+    showToast("Einstellungen gespeichert");
+  } catch(err) {
+    showToast("Fehler beim Speichern");
+  }
+}
+
+// ── PIN logic ─────────────────────────────────────────
+function buildPinGrid() {
+  const grid = document.getElementById("pin-grid");
+  const keys = ["1","2","3","4","5","6","7","8","9","","0","⌫"];
+  grid.innerHTML = keys.map(k =>
+    k ? `<button class="pin-key${k==="⌫"?" backspace":""}" data-k="${k}">${k}</button>`
+      : `<div></div>`
+  ).join("");
+  grid.querySelectorAll(".pin-key").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (btn.dataset.k === "⌫") {
+        pinBuffer = pinBuffer.slice(0,-1);
+      } else {
+        if (pinBuffer.length < 4) pinBuffer += btn.dataset.k;
+      }
+      updatePinDots();
+      if (pinBuffer.length === 4) {
+        setTimeout(() => checkPin(), 150);
+      }
+    });
+  });
+}
+
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById(`pd${i}`).classList.toggle("filled", i < pinBuffer.length);
+  }
+}
+
+function checkPin() {
+  if (pinBuffer === PIN) {
+    document.getElementById("pin-error").textContent = "";
+    pinTarget?.();
+  } else {
+    document.getElementById("pin-error").textContent = "Falsche PIN";
+    pinBuffer = "";
+    updatePinDots();
+  }
+}
+
+/* ──────────────────────────────────────────────────────
+   7. INIT
+   ────────────────────────────────────────────────────── */
+function initState() {
+  const today = new Date();
+  const savedWeek = localStorage.getItem("ui_weekStart");
+  const savedMonth = localStorage.getItem("ui_monthKey");
+
+  state.currentWeekStart = savedWeek ? parseIso(savedWeek) : getMonday(today);
+  state.currentMonthKey = savedMonth || getMonthKey(today);
+}
+
+async function startApp(key) {
+  householdKey = key;
+  localStorage.setItem("householdKey", key);
+
+  document.getElementById("key-screen").classList.add("hidden");
+  document.getElementById("app").style.display = "";
+
+  initState();
+  renderDateHeader();
+
+  if (DEMO_MODE) {
+    // Populate demo data
+    data.settings = { weeklyBudgetDefault: 200, monthlyBudgetDefault: 100 };
+    ensureWeek(getWeekKey(state.currentWeekStart), state.currentWeekStart);
+    ensureMonth(state.currentMonthKey);
+    fadeOutLoading();
+    renderAll();
+    return;
+  }
+
+  // Init default settings if first time
+  const existingSettings = await fbGet("settings");
+  if (!existingSettings) {
+    await fbSet("settings", data.settings);
+  } else {
+    data.settings = { ...data.settings, ...existingSettings };
+  }
+
+  subscribeHousehold();
+  fadeOutLoading();
+}
+
+function fadeOutLoading() {
+  const lo = document.getElementById("loading-overlay");
+  lo.classList.add("fade-out");
+  setTimeout(() => lo.style.display = "none", 500);
+}
+
+function bindEvents() {
+  // Key screen
+  document.getElementById("key-submit").addEventListener("click", () => {
+    const val = document.getElementById("key-input").value.trim().toLowerCase().replace(/\s+/g,"-");
+    if (!val) { showToast("Bitte Schlüssel eingeben"); return; }
+    startApp(val);
+  });
+  document.getElementById("key-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("key-submit").click();
+  });
+
+  // Today button
+  document.getElementById("today-btn").addEventListener("click", () => {
+    const today = new Date();
+    state.currentWeekStart = getMonday(today);
+    state.currentMonthKey = getMonthKey(today);
+    renderAll();
+    saveUIState();
+    showToast("Zurück zu heute");
+  });
+
+  // Week navigation
+  document.getElementById("week-prev").addEventListener("click", () => goToWeek(addWeeks(state.currentWeekStart, -1)));
+  document.getElementById("week-next").addEventListener("click", () => goToWeek(addWeeks(state.currentWeekStart, 1)));
+
+  // Month navigation
+  document.getElementById("month-prev").addEventListener("click", () => {
+    const [y,m] = state.currentMonthKey.split("-").map(Number);
+    const prev = getMonthKey(new Date(y, m-2, 1));
+    goToMonth(prev);
+  });
+  document.getElementById("month-next").addEventListener("click", () => {
+    const [y,m] = state.currentMonthKey.split("-").map(Number);
+    const next = getMonthKey(new Date(y, m, 1));
+    goToMonth(next);
+  });
+
+  // Week add / toggle
+  document.getElementById("week-add-btn").addEventListener("click", () => openAddEntry("weekly"));
+  document.getElementById("week-toggle-btn").addEventListener("click", () => {
+    state.weekEntriesOpen = !state.weekEntriesOpen;
+    document.getElementById("week-entries").classList.toggle("open", state.weekEntriesOpen);
+    document.getElementById("week-toggle-btn").textContent = state.weekEntriesOpen ? "▲ Liste" : "📋 Liste";
+  });
+
+  // Month add / toggle
+  document.getElementById("month-add-btn").addEventListener("click", () => openAddEntry("monthly"));
+  document.getElementById("month-toggle-btn").addEventListener("click", () => {
+    state.monthEntriesOpen = !state.monthEntriesOpen;
+    document.getElementById("month-entries").classList.toggle("open", state.monthEntriesOpen);
+    document.getElementById("month-toggle-btn").textContent = state.monthEntriesOpen ? "▲ Liste" : "📋 Liste";
+  });
+
+  // Chip selection
+  document.getElementById("shop-chips").addEventListener("click", e => {
+    const chip = e.target.closest(".chip");
+    if (!chip) return;
+    selectChip(chip.dataset.value);
+  });
+
+  // Entry sheet
+  document.getElementById("entry-cancel-btn").addEventListener("click", closeSheet);
+  document.getElementById("sheet-overlay").addEventListener("click", closeSheet);
+  document.getElementById("entry-save-btn").addEventListener("click", saveEntry);
+
+  // Entry list events (delegated)
+  ["week-entries-inner", "month-entries-inner"].forEach(id => {
+    document.getElementById(id).addEventListener("click", e => {
+      const editBtn = e.target.closest(".entry-btn.edit");
+      const delBtn = e.target.closest(".entry-btn.delete");
+      if (editBtn) { openEditEntry(editBtn.dataset.id, editBtn.dataset.type); return; }
+      if (delBtn) { deleteEntry(delBtn.dataset.id, delBtn.dataset.type); return; }
+      // tap on row = edit
+      const row = e.target.closest(".entry-item");
+      if (row) openEditEntry(row.dataset.id, row.dataset.type);
+    });
+  });
+
+  // Settings
+  document.getElementById("settings-btn").addEventListener("click", openSettingsWithPin);
+  document.getElementById("settings-close").addEventListener("click", () => {
+    document.getElementById("settings-panel").classList.remove("open");
+  });
+  document.getElementById("save-settings-btn").addEventListener("click", saveSettings);
+  document.getElementById("change-key-btn").addEventListener("click", () => {
+    if (!confirm("Schlüssel wirklich ändern? Die App wird neu geladen.")) return;
+    localStorage.removeItem("householdKey");
+    location.reload();
+  });
+
+  // PIN
+  buildPinGrid();
+  document.getElementById("pin-cancel").addEventListener("click", () => {
+    document.getElementById("pin-overlay").classList.remove("open");
+  });
+
+  // Swipe on week header
+  addSwipe(document.getElementById("week-header"),
+    () => goToWeek(addWeeks(state.currentWeekStart, 1)),
+    () => goToWeek(addWeeks(state.currentWeekStart, -1))
+  );
+
+  // Swipe on month header
+  addSwipe(document.getElementById("month-header"),
+    () => {
+      const [y,m] = state.currentMonthKey.split("-").map(Number);
+      goToMonth(getMonthKey(new Date(y, m, 1)));
+    },
+    () => {
+      const [y,m] = state.currentMonthKey.split("-").map(Number);
+      goToMonth(getMonthKey(new Date(y, m-2, 1)));
+    }
+  );
+
+  // Offline detection
+  window.addEventListener("online", () => {
+    document.getElementById("offline-notice").classList.remove("show");
+  });
+  window.addEventListener("offline", () => {
+    document.getElementById("offline-notice").classList.add("show");
+  });
+}
+
+// Entry point
+document.addEventListener("DOMContentLoaded", () => {
+  bindEvents();
+  const savedKey = localStorage.getItem("householdKey");
+  if (savedKey) {
+    document.getElementById("key-input").value = savedKey;
+  }
+
+  const tryStart = () => {
+    const key = localStorage.getItem("householdKey");
+    if (key) {
+      startApp(key);
+    } else {
+      fadeOutLoading();
+    }
+  };
+
+  if (DEMO_MODE) {
+    tryStart();
+    return;
+  }
+
+  if (window.__FB) {
+    tryStart();
+  } else {
+    window.addEventListener("firebase-ready", tryStart, { once: true });
+    // Fallback if Firebase fails to load
+    setTimeout(() => {
+      if (!window.__FB) {
+        document.querySelector(".loading-label").textContent = "Firebase nicht verbunden";
+        setTimeout(() => {
+          document.getElementById("loading-overlay").style.display = "none";
+          document.getElementById("key-screen").classList.remove("hidden");
+        }, 1500);
+      }
+    }, 5000);
+  }
+});
+</script>
+</body>
+</html>
