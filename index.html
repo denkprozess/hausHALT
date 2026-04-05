@@ -46,14 +46,6 @@
   --danger: #991b1b;
   --danger-light: #fee2e2;
   --danger-mid: #ef4444;
-  --tank: #78530a;
-  --tank-light: #fdf3dc;
-  --tank-mid: #e9a020;
-  --tank-card: #fffbf0;
-  --junk: #9b2335;
-  --junk-light: #fde8ec;
-  --junk-mid: #e05272;
-  --junk-card: #fff6f7;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
   --shadow: 0 4px 16px rgba(0,0,0,0.08),0 1px 4px rgba(0,0,0,0.04);
   --radius: 20px;
@@ -91,14 +83,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 
 /* cards */
 .budget-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
-.card-tank{background:var(--tank-card);box-shadow:0 4px 16px rgba(233,160,32,0.10),0 1px 4px rgba(0,0,0,0.04)}
-.card-junk{background:var(--junk-card);box-shadow:0 4px 16px rgba(224,82,114,0.10),0 1px 4px rgba(0,0,0,0.04)}
 
 .card-header{padding:20px 20px 0;user-select:none;-webkit-tap-highlight-color:transparent}
 .card-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .card-title{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)}
-.card-tank .card-title{color:var(--tank)}
-.card-junk .card-title{color:var(--junk)}
 
 .card-nav{display:flex;align-items:center;gap:6px}
 .card-nav-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:var(--tr);-webkit-tap-highlight-color:transparent}
@@ -111,8 +99,6 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 .budget-remaining.s-ok{color:var(--accent)}
 .budget-remaining.s-warn{color:var(--warn)}
 .budget-remaining.s-danger{color:var(--danger)}
-.budget-remaining.s-tank{color:var(--tank)}
-.budget-remaining.s-junk{color:var(--junk)}
 .budget-meta{display:flex;flex-direction:column;align-items:flex-end;gap:2px;padding-bottom:4px}
 .budget-meta span{font-size:12px;color:var(--text3)}
 .budget-meta strong{font-size:14px;color:var(--text2);font-weight:500}
@@ -123,36 +109,24 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 .status-badge.s-ok{background:var(--accent-light);color:var(--accent)}
 .status-badge.s-warn{background:var(--warn-light);color:var(--warn)}
 .status-badge.s-danger{background:var(--danger-light);color:var(--danger)}
-.status-badge.s-tank{background:var(--tank-light);color:var(--tank)}
-.status-badge.s-junk{background:var(--junk-light);color:var(--junk)}
 .card-btn-group{display:flex;gap:6px}
 .card-icon-btn{width:34px;height:34px;border-radius:var(--radius-xs);border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1;transition:var(--tr);-webkit-tap-highlight-color:transparent;flex-shrink:0}
 .card-icon-btn:active{transform:scale(0.91);background:var(--surface2)}
-.card-tank .card-icon-btn{background:var(--tank-card);border-color:rgba(233,160,32,0.3)}
-.card-junk .card-icon-btn{background:var(--junk-card);border-color:rgba(224,82,114,0.3)}
 
 /* progress */
 .progress-wrap{margin:0 20px 0;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
-.card-tank .progress-wrap{background:rgba(233,160,32,0.12)}
-.card-junk .progress-wrap{background:rgba(224,82,114,0.12)}
 .progress-bar{height:100%;border-radius:2px;transition:width 600ms cubic-bezier(0.4,0,0.2,1),background-color var(--tr-slow)}
 .progress-bar.s-ok{background:var(--accent-mid)}
 .progress-bar.s-warn{background:var(--warn-mid)}
 .progress-bar.s-danger{background:var(--danger-mid)}
-.progress-bar.s-tank{background:var(--tank-mid)}
-.progress-bar.s-junk{background:var(--junk-mid)}
 
 /* entries */
 .card-entries{border-top:1px solid var(--border);overflow:hidden;max-height:0;transition:max-height 400ms cubic-bezier(0.4,0,0.2,1)}
 .card-entries.open{max-height:2000px}
-.card-tank .card-entries{border-top-color:rgba(233,160,32,0.18)}
-.card-junk .card-entries{border-top-color:rgba(224,82,114,0.18)}
 .entries-inner{padding:8px 12px 12px}
 .entry-item{display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:var(--radius-xs);transition:background var(--tr);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .entry-item:hover{background:var(--surface2)}
 .entry-dot{width:8px;height:8px;border-radius:50%;background:var(--accent-mid);flex-shrink:0}
-.card-tank .entry-dot{background:var(--tank-mid)}
-.card-junk .entry-dot{background:var(--junk-mid)}
 .entry-info{flex:1;min-width:0}
 .entry-title{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .entry-date{font-size:12px;color:var(--text3);margin-top:1px}
@@ -349,10 +323,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
     </div>
 
     <!-- Tankbudget (DB: tanks) -->
-    <div class="budget-card card-tank" id="tank-card">
+    <div class="budget-card" id="tank-card">
       <div class="card-header card-swipe-wrap" id="tank-header">
         <div class="card-title-row">
-          <span class="card-title">Tankbudget</span>
+          <span class="card-title">⛽ Tankbudget</span>
           <div class="card-nav">
             <button class="card-nav-btn" id="tank-prev">‹</button>
             <span class="card-period" id="tank-period"></span>
@@ -360,29 +334,29 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
           </div>
         </div>
         <div class="budget-display">
-          <div class="budget-remaining s-tank" id="tank-remaining">0,00 €</div>
+          <div class="budget-remaining s-ok" id="tank-remaining">0,00 €</div>
           <div class="budget-meta">
             <span>Gesamt</span><strong id="tank-total-budget">0,00 €</strong>
             <span>Ausgaben</span><strong id="tank-spent">0,00 €</strong>
           </div>
         </div>
         <div class="card-badge-row">
-          <div class="status-badge s-tank" id="tank-badge">✓ Im Rahmen</div>
+          <div class="status-badge s-ok" id="tank-badge">✓ Im Rahmen</div>
           <div class="card-btn-group">
             <button class="card-icon-btn" id="tank-add-btn" title="Tankvorgang hinzufügen">＋</button>
             <button class="card-icon-btn" id="tank-toggle-btn" title="Liste">📋</button>
           </div>
         </div>
       </div>
-      <div class="progress-wrap"><div class="progress-bar s-tank" id="tank-progress" style="width:0%"></div></div>
+      <div class="progress-wrap"><div class="progress-bar s-ok" id="tank-progress" style="width:0%"></div></div>
       <div class="card-entries" id="tank-entries"><div class="entries-inner" id="tank-entries-inner"></div></div>
     </div>
 
     <!-- Junk Food (DB: junkfood) — kein Budget -->
-    <div class="budget-card card-junk" id="junk-card">
+    <div class="budget-card" id="junk-card">
       <div class="card-header card-swipe-wrap" id="junk-header">
         <div class="card-title-row">
-          <span class="card-title">Junk Food</span>
+          <span class="card-title">🍔 Junk Food</span>
           <div class="card-nav">
             <button class="card-nav-btn" id="junk-prev">‹</button>
             <span class="card-period" id="junk-period"></span>
@@ -390,14 +364,14 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
           </div>
         </div>
         <div class="budget-display">
-          <div class="budget-remaining s-junk" id="junk-total" style="font-size:36px">0,00 €</div>
+          <div class="budget-remaining s-ok" id="junk-total" style="font-size:36px">0,00 €</div>
           <div class="budget-meta">
             <span>Einträge</span><strong id="junk-count">0</strong>
             <span>diesen Monat</span>
           </div>
         </div>
         <div class="card-badge-row">
-          <div class="status-badge s-junk" id="junk-badge">🍔 Tracking</div>
+          <div class="status-badge s-ok" id="junk-badge">🍔 Tracking</div>
           <div class="card-btn-group">
             <button class="card-icon-btn" id="junk-add-btn" title="Junk Food hinzufügen">＋</button>
             <button class="card-icon-btn" id="junk-toggle-btn" title="Liste">📋</button>
@@ -523,8 +497,6 @@ let fbListeners  = [];
 let state = {
   currentWeekStart: null,
   currentMonthKey: "",
-  tankMonthKey: "",
-  junkMonthKey: "",
   weekEntriesOpen: false,
   monthEntriesOpen: false,
   tankEntriesOpen: false,
@@ -595,8 +567,8 @@ function renderDateHeader(){
   $("today-btn").classList.toggle("is-today",vt);
   $("week-period").textContent=`KW ${getWeekCW(mon)}`;
   $("month-period").textContent=mlShort(mk);
-  $("tank-period").textContent=mlShort(state.tankMonthKey);
-  $("junk-period").textContent=mlShort(state.junkMonthKey);
+  $("tank-period").textContent=mlShort(state.currentMonthKey);
+  $("junk-period").textContent=mlShort(state.currentMonthKey);
 }
 
 function renderWeekCard(){
@@ -613,23 +585,16 @@ function renderMonthCard(){
   renderEntries("month-entries-inner",m.entries||{},"monthly");
 }
 function renderTankCard(){
-  const mk=state.tankMonthKey;ensureTank(mk);
+  const mk=state.currentMonthKey;ensureTank(mk);
   const t=data.tanks[mk],spent=sumE(t.entries),budget=t.budget,rem=budget-spent;
-  const st=calcSt(rem,budget),pct=budget>0?Math.min(100,Math.max(0,(spent/budget)*100)):0;
-  $("tank-remaining").textContent=fmtMoney(rem);
-  $("tank-remaining").className="budget-remaining s-tank";
-  $("tank-total-budget").textContent=fmtMoney(budget);
-  $("tank-spent").textContent=fmtMoney(spent);
-  $("tank-badge").textContent=stLabel(rem,budget);
-  $("tank-badge").className=`status-badge ${st==="ok"?"s-tank":"s-"+st}`;
-  $("tank-progress").style.width=`${pct}%`;
-  $("tank-progress").className=`progress-bar ${st==="ok"?"s-tank":"s-"+st}`;
+  setBudget("tank",rem,budget,calcSt(rem,budget),spent);
   renderEntries("tank-entries-inner",t.entries||{},"tank");
 }
 function renderJunkCard(){
-  const mk=state.junkMonthKey;ensureJunk(mk);
+  const mk=state.currentMonthKey;ensureJunk(mk);
   const j=data.junkfood[mk],total=sumE(j.entries),count=Object.keys(j.entries||{}).length;
   $("junk-total").textContent=fmtMoney(total);
+  $("junk-total").className="budget-remaining s-ok";
   $("junk-count").textContent=count;
   renderEntries("junk-entries-inner",j.entries||{},"junk");
 }
@@ -710,8 +675,8 @@ function openAddEntry(type){
 function getEntries(type){
   if(type==="weekly")return data.weeks[getWeekKey(state.currentWeekStart)]?.entries||{};
   if(type==="monthly")return data.months[state.currentMonthKey]?.entries||{};
-  if(type==="tank")return data.tanks[state.tankMonthKey]?.entries||{};
-  if(type==="junk")return data.junkfood[state.junkMonthKey]?.entries||{};
+  if(type==="tank")return data.tanks[state.currentMonthKey]?.entries||{};
+  if(type==="junk")return data.junkfood[state.currentMonthKey]?.entries||{};
   return{};
 }
 
@@ -746,11 +711,11 @@ async function saveEntry(){
       if(!(await fbGet(`months/${mk}/budget`)))await fbSet(`months/${mk}`,{budget:Number(data.settings.monthlyBudgetDefault)||100,month:mk,entries:{}});
       await fbSet(`months/${mk}/entries/${eid}`,entry);
     }else if(type==="tank"){
-      const mk=state.tankMonthKey;
+      const mk=state.currentMonthKey;
       if(!(await fbGet(`tanks/${mk}/budget`)))await fbSet(`tanks/${mk}`,{budget:Number(data.settings.tankBudgetDefault)||300,month:mk,entries:{}});
       await fbSet(`tanks/${mk}/entries/${eid}`,entry);
     }else if(type==="junk"){
-      const mk=state.junkMonthKey;
+      const mk=state.currentMonthKey;
       if(!(await fbGet(`junkfood/${mk}/month`)))await fbSet(`junkfood/${mk}`,{month:mk,entries:{}});
       await fbSet(`junkfood/${mk}/entries/${eid}`,entry);
     }
@@ -760,7 +725,7 @@ async function saveEntry(){
 
 async function deleteEntry(id,type){
   if(!confirm("Eintrag wirklich löschen?"))return;
-  const paths={weekly:`weeks/${getWeekKey(state.currentWeekStart)}/entries/${id}`,monthly:`months/${state.currentMonthKey}/entries/${id}`,tank:`tanks/${state.tankMonthKey}/entries/${id}`,junk:`junkfood/${state.junkMonthKey}/entries/${id}`};
+  const paths={weekly:`weeks/${getWeekKey(state.currentWeekStart)}/entries/${id}`,monthly:`months/${state.currentMonthKey}/entries/${id}`,tank:`tanks/${state.currentMonthKey}/entries/${id}`,junk:`junkfood/${state.currentMonthKey}/entries/${id}`};
   try{await fbDel(paths[type]);showToast("Eintrag gelöscht")}catch{showToast("Fehler beim Löschen")}
 }
 
@@ -772,13 +737,11 @@ function goToMonth(mk){
   state.currentWeekStart=mk===getMonthKey(today)?getMonday(today):getLastWeekOfMonth(mk);
   renderAll();saveUI();
 }
-function goTankMonth(mk){state.tankMonthKey=mk;renderTankCard();renderDateHeader();saveUI()}
-function goJunkMonth(mk){state.junkMonthKey=mk;renderJunkCard();renderDateHeader();saveUI()}
+function goTankMonth(mk){goToMonth(mk)}
+function goJunkMonth(mk){goToMonth(mk)}
 function saveUI(){
   localStorage.setItem("ui_weekStart",isoDate(state.currentWeekStart));
   localStorage.setItem("ui_monthKey",state.currentMonthKey);
-  localStorage.setItem("ui_tankMK",state.tankMonthKey);
-  localStorage.setItem("ui_junkMK",state.junkMonthKey);
 }
 
 function toggleEntries(pfx){
@@ -837,11 +800,8 @@ function checkPin(){
 function initState(){
   const today=new Date();
   const sw=localStorage.getItem("ui_weekStart"),sm=localStorage.getItem("ui_monthKey");
-  const st=localStorage.getItem("ui_tankMK"),sj=localStorage.getItem("ui_junkMK");
   state.currentWeekStart=sw?parseIso(sw):getMonday(today);
   state.currentMonthKey=sm||getMonthKey(today);
-  state.tankMonthKey=st||getMonthKey(today);
-  state.junkMonthKey=sj||getMonthKey(today);
 }
 
 async function startApp(key){
@@ -851,7 +811,7 @@ async function startApp(key){
   if(DEMO_MODE){
     data.settings={weeklyBudgetDefault:200,monthlyBudgetDefault:100,tankBudgetDefault:300};
     ensureWeek(getWeekKey(state.currentWeekStart),state.currentWeekStart);
-    ensureMonth(state.currentMonthKey);ensureTank(state.tankMonthKey);ensureJunk(state.junkMonthKey);
+    ensureMonth(state.currentMonthKey);ensureTank(state.currentMonthKey);ensureJunk(state.currentMonthKey);
     fadeOutLoading();renderAll();return;
   }
   const es=await fbGet("settings");
@@ -870,7 +830,6 @@ function bindEvents(){
 
   $("today-btn").addEventListener("click",()=>{
     const t=new Date();state.currentWeekStart=getMonday(t);state.currentMonthKey=getMonthKey(t);
-    state.tankMonthKey=getMonthKey(t);state.junkMonthKey=getMonthKey(t);
     renderAll();saveUI();showToast("Zurück zu heute");
   });
 
@@ -878,10 +837,10 @@ function bindEvents(){
   $("week-next").addEventListener("click",()=>goToWeek(addWeeks(state.currentWeekStart,1)));
   $("month-prev").addEventListener("click",()=>goToMonth(prevMK(state.currentMonthKey)));
   $("month-next").addEventListener("click",()=>goToMonth(nextMK(state.currentMonthKey)));
-  $("tank-prev").addEventListener("click",()=>goTankMonth(prevMK(state.tankMonthKey)));
-  $("tank-next").addEventListener("click",()=>goTankMonth(nextMK(state.tankMonthKey)));
-  $("junk-prev").addEventListener("click",()=>goJunkMonth(prevMK(state.junkMonthKey)));
-  $("junk-next").addEventListener("click",()=>goJunkMonth(nextMK(state.junkMonthKey)));
+  $("tank-prev").addEventListener("click",()=>goTankMonth(prevMK(state.currentMonthKey)));
+  $("tank-next").addEventListener("click",()=>goTankMonth(nextMK(state.currentMonthKey)));
+  $("junk-prev").addEventListener("click",()=>goJunkMonth(prevMK(state.currentMonthKey)));
+  $("junk-next").addEventListener("click",()=>goJunkMonth(nextMK(state.currentMonthKey)));
 
   $("week-add-btn").addEventListener("click",()=>openAddEntry("weekly"));
   $("week-toggle-btn").addEventListener("click",()=>toggleEntries("week"));
@@ -917,8 +876,8 @@ function bindEvents(){
 
   addSwipe($("week-header"),()=>goToWeek(addWeeks(state.currentWeekStart,1)),()=>goToWeek(addWeeks(state.currentWeekStart,-1)));
   addSwipe($("month-header"),()=>goToMonth(nextMK(state.currentMonthKey)),()=>goToMonth(prevMK(state.currentMonthKey)));
-  addSwipe($("tank-header"),()=>goTankMonth(nextMK(state.tankMonthKey)),()=>goTankMonth(prevMK(state.tankMonthKey)));
-  addSwipe($("junk-header"),()=>goJunkMonth(nextMK(state.junkMonthKey)),()=>goJunkMonth(prevMK(state.junkMonthKey)));
+  addSwipe($("tank-header"),()=>goTankMonth(nextMK(state.currentMonthKey)),()=>goTankMonth(prevMK(state.currentMonthKey)));
+  addSwipe($("junk-header"),()=>goJunkMonth(nextMK(state.currentMonthKey)),()=>goJunkMonth(prevMK(state.currentMonthKey)));
 
   window.addEventListener("online",()=>$("offline-notice").classList.remove("show"));
   window.addEventListener("offline",()=>$("offline-notice").classList.add("show"));
