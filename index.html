@@ -17,11 +17,11 @@
   measurementId: "G-LT4BJQDQXC"
   };
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
-  const { getDatabase, ref, set, get, remove, onValue, off }
+  const { getDatabase, ref, set, get, remove, onValue, off, runTransaction }
     = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
   const firebaseApp = initializeApp(FIREBASE_CONFIG);
   const db = getDatabase(firebaseApp);
-  window.__FB = { db, ref, set, get, remove, onValue, off };
+  window.__FB = { db, ref, set, get, remove, onValue, off, runTransaction };
   window.dispatchEvent(new Event("firebase-ready"));
 </script>
 
@@ -448,6 +448,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
   <div class="sheet-body">
     <input type="hidden" id="entry-id">
     <input type="hidden" id="entry-type">
+    <input type="hidden" id="entry-source-key">
     <div class="form-group" id="chips-group">
       <label class="form-label" id="chips-label">Kategorie</label>
       <div class="chips-wrap" id="shop-chips"></div>
@@ -513,8 +514,17 @@ const pad = n => String(n).padStart(2,"0");
 function getMonday(d){const dt=new Date(d),day=dt.getDay();dt.setDate(dt.getDate()+(day===0?-6:1-day));dt.setHours(0,0,0,0);return dt}
 function addDays(d,n){const dt=new Date(d);dt.setDate(dt.getDate()+n);return dt}
 function addWeeks(d,n){return addDays(d,n*7)}
-function getWeekKey(m){const y=m.getFullYear(),j=new Date(y,0,1);return`${y}-W${pad(Math.ceil(((m-j)/86400000+j.getDay()+1)/7))}`}
-function getWeekCW(m){const j=new Date(m.getFullYear(),0,1);return Math.ceil(((m-j)/86400000+j.getDay()+1)/7)}
+function getISOWeek(m){
+  const d=new Date(Date.UTC(m.getFullYear(),m.getMonth(),m.getDate()));
+  const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);
+  const year=d.getUTCFullYear(),start=new Date(Date.UTC(year,0,1));
+  return{year,week:Math.ceil((((d-start)/86400000)+1)/7)};
+}
+function getWeekKey(m){const w=getISOWeek(m);return`${w.year}-W${pad(w.week)}`}
+// Schlüssel aus der ersten App-Version: nur zum Lesen bereits gespeicherter Wochen.
+function getLegacyWeekKey(m){const y=m.getFullYear(),j=new Date(y,0,1);return`${y}-W${pad(Math.ceil(((m-j)/86400000+j.getDay()+1)/7))}`}
+function getWeekCW(m){return getISOWeek(m).week}
+function getWeekStorageKey(m){const key=getWeekKey(m),legacy=getLegacyWeekKey(m);return data.weeks[key]?key:(data.weeks[legacy]?legacy:key)}
 function getMonthKey(d){return`${d.getFullYear()}-${pad(d.getMonth()+1)}`}
 function prevMK(mk){const[y,m]=mk.split("-").map(Number);return getMonthKey(new Date(y,m-2,1))}
 function nextMK(mk){const[y,m]=mk.split("-").map(Number);return getMonthKey(new Date(y,m,1))}
@@ -543,6 +553,10 @@ const fbR = p => window.__FB.ref(window.__FB.db,p);
 async function fbSet(p,v){if(DEMO_MODE)return;return window.__FB.set(fbR(dbP(p)),v)}
 async function fbGet(p){if(DEMO_MODE)return null;const s=await window.__FB.get(fbR(dbP(p)));return s.exists()?s.val():null}
 async function fbDel(p){if(DEMO_MODE)return;return window.__FB.remove(fbR(dbP(p)))}
+async function fbEnsure(p,initial){
+  if(DEMO_MODE)return;
+  return window.__FB.runTransaction(fbR(dbP(p)),current=>current??initial);
+}
 function fbListen(p,cb){if(DEMO_MODE)return;const r=fbR(dbP(p));window.__FB.onValue(r,s=>cb(s.exists()?s.val():null));fbListeners.push({r})}
 function stopListeners(){fbListeners.forEach(({r})=>window.__FB.off(r));fbListeners=[]}
 
@@ -572,7 +586,7 @@ function renderDateHeader(){
 }
 
 function renderWeekCard(){
-  const mon=state.currentWeekStart,wk=getWeekKey(mon);
+  const mon=state.currentWeekStart,wk=getWeekStorageKey(mon);
   ensureWeek(wk,mon);
   const w=data.weeks[wk],spent=sumE(w.entries),budget=w.budget,rem=budget-spent;
   setBudget("week",rem,budget,calcSt(rem,budget),spent);
@@ -666,14 +680,14 @@ function selectChip(val){
 }
 
 function openAddEntry(type){
-  $("entry-id").value="";$("entry-type").value=type;
+  $("entry-id").value="";$("entry-type").value=type;$("entry-source-key").value="";
   $("entry-amount-input").value="";$("entry-date-input").value=isoDate(new Date());
   $("entry-sheet-title").textContent=SHEET_TITLES[type]||"Hinzufügen";
   $("chips-group").style.display="";buildChips(type);resetChips();openSheet();
 }
 
 function getEntries(type){
-  if(type==="weekly")return data.weeks[getWeekKey(state.currentWeekStart)]?.entries||{};
+  if(type==="weekly")return data.weeks[getWeekStorageKey(state.currentWeekStart)]?.entries||{};
   if(type==="monthly")return data.months[state.currentMonthKey]?.entries||{};
   if(type==="tank")return data.tanks[state.currentMonthKey]?.entries||{};
   if(type==="junk")return data.junkfood[state.currentMonthKey]?.entries||{};
@@ -682,7 +696,8 @@ function getEntries(type){
 
 function openEditEntry(id,type){
   const e=getEntries(type)[id];if(!e)return;
-  $("entry-id").value=id;$("entry-type").value=type;
+  const sourceKeys={weekly:getWeekStorageKey(state.currentWeekStart),monthly:state.currentMonthKey,tank:state.currentMonthKey,junk:state.currentMonthKey};
+  $("entry-id").value=id;$("entry-type").value=type;$("entry-source-key").value=sourceKeys[type];
   $("entry-amount-input").value=fmtMoneyIn(e.amount);$("entry-date-input").value=e.date;
   $("entry-sheet-title").textContent="Eintrag bearbeiten";
   $("chips-group").style.display="none";
@@ -691,7 +706,7 @@ function openEditEntry(id,type){
 }
 
 async function saveEntry(){
-  const id=$("entry-id").value,type=$("entry-type").value;
+  const id=$("entry-id").value,type=$("entry-type").value,sourceKey=$("entry-source-key").value;
   const title=$("entry-title-input").value.trim();
   const amount=parseFloat($("entry-amount-input").value.replace(",","."));
   const date=$("entry-date-input").value;
@@ -702,30 +717,33 @@ async function saveEntry(){
   const entry={id:eid,type,title,amount:Number(amount),date,
     createdAt:id?(getEntries(type)[id]?.createdAt||now):now,...(id?{updatedAt:now}:{})};
   try{
+    let targetKey,path,initial;
     if(type==="weekly"){
-      const mon=state.currentWeekStart,wk=getWeekKey(mon);
-      if(!(await fbGet(`weeks/${wk}/budget`)))await fbSet(`weeks/${wk}`,{budget:Number(data.settings.weeklyBudgetDefault)||200,startDate:isoDate(mon),endDate:isoDate(addDays(mon,6)),entries:{}});
-      await fbSet(`weeks/${wk}/entries/${eid}`,entry);
+      const mon=getMonday(parseIso(date));targetKey=getWeekStorageKey(mon);path="weeks";
+      initial={budget:Number(data.settings.weeklyBudgetDefault)||200,startDate:isoDate(mon),endDate:isoDate(addDays(mon,6)),entries:{}};
     }else if(type==="monthly"){
-      const mk=state.currentMonthKey;
-      if(!(await fbGet(`months/${mk}/budget`)))await fbSet(`months/${mk}`,{budget:Number(data.settings.monthlyBudgetDefault)||100,month:mk,entries:{}});
-      await fbSet(`months/${mk}/entries/${eid}`,entry);
+      targetKey=getMonthKey(parseIso(date));path="months";
+      initial={budget:Number(data.settings.monthlyBudgetDefault)||100,month:targetKey,entries:{}};
     }else if(type==="tank"){
-      const mk=state.currentMonthKey;
-      if(!(await fbGet(`tanks/${mk}/budget`)))await fbSet(`tanks/${mk}`,{budget:Number(data.settings.tankBudgetDefault)||300,month:mk,entries:{}});
-      await fbSet(`tanks/${mk}/entries/${eid}`,entry);
+      targetKey=getMonthKey(parseIso(date));path="tanks";
+      initial={budget:Number(data.settings.tankBudgetDefault)||300,month:targetKey,entries:{}};
     }else if(type==="junk"){
-      const mk=state.currentMonthKey;
-      if(!(await fbGet(`junkfood/${mk}/month`)))await fbSet(`junkfood/${mk}`,{month:mk,entries:{}});
-      await fbSet(`junkfood/${mk}/entries/${eid}`,entry);
+      targetKey=getMonthKey(parseIso(date));path="junkfood";
+      initial={month:targetKey,entries:{}};
     }
-    closeSheet();showToast(id?"Eintrag aktualisiert":"Eintrag gespeichert");
+    await fbEnsure(`${path}/${targetKey}`,initial);
+    await fbSet(`${path}/${targetKey}/entries/${eid}`,entry);
+    if(id&&sourceKey&&sourceKey!==targetKey)await fbDel(`${path}/${sourceKey}/entries/${eid}`);
+    document.activeElement?.blur();closeSheet();
+    requestAnimationFrame(()=>window.scrollTo({top:0,behavior:"auto"}));
+    setTimeout(()=>window.scrollTo({top:0,behavior:"auto"}),350);
+    showToast(id?"Eintrag aktualisiert":"Eintrag gespeichert");
   }catch(err){showToast("Fehler beim Speichern");console.error(err)}
 }
 
 async function deleteEntry(id,type){
   if(!confirm("Eintrag wirklich löschen?"))return;
-  const paths={weekly:`weeks/${getWeekKey(state.currentWeekStart)}/entries/${id}`,monthly:`months/${state.currentMonthKey}/entries/${id}`,tank:`tanks/${state.currentMonthKey}/entries/${id}`,junk:`junkfood/${state.currentMonthKey}/entries/${id}`};
+  const paths={weekly:`weeks/${getWeekStorageKey(state.currentWeekStart)}/entries/${id}`,monthly:`months/${state.currentMonthKey}/entries/${id}`,tank:`tanks/${state.currentMonthKey}/entries/${id}`,junk:`junkfood/${state.currentMonthKey}/entries/${id}`};
   try{await fbDel(paths[type]);showToast("Eintrag gelöscht")}catch{showToast("Fehler beim Löschen")}
 }
 
