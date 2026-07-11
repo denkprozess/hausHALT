@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Haushaltbuch">
+  <rect width="64" height="64" rx="14" fill="#f5f4f0"/>
+  <text x="5" y="51" fill="#171715" font-family="Georgia, 'Times New Roman', serif" font-size="53" font-weight="700" letter-spacing="-4">H</text>
+  <text x="34" y="52" fill="#2d6a4f" font-family="Georgia, 'Times New Roman', serif" font-size="43" font-weight="700" font-style="italic" letter-spacing="-3">b</text>
+</svg>

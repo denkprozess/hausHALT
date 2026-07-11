@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Haushaltsbuch</title>
+<link rel="icon" type="image/svg+xml" href="public/favicon.svg?v=2">
 
 <script type="module">
   const FIREBASE_CONFIG = {
@@ -24,6 +25,7 @@
   window.__FB = { db, ref, set, get, remove, onValue, off, runTransaction };
   window.dispatchEvent(new Event("firebase-ready"));
 </script>
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap');
@@ -61,20 +63,24 @@
 html{-webkit-text-size-adjust:100%}
 body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100dvh;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
 
-#app{max-width:480px;margin:0 auto;padding:0 16px env(safe-area-inset-bottom,24px);display:flex;flex-direction:column;min-height:100dvh}
+#app{max-width:520px;margin:0 auto;padding:0 16px env(safe-area-inset-bottom,24px);display:flex;flex-direction:column;min-height:100dvh}
 
 /* top bar */
 #top-bar{display:flex;align-items:center;justify-content:space-between;padding:16px 0 8px;position:sticky;top:0;z-index:100;background:linear-gradient(to bottom,var(--bg) 85%,transparent)}
 #top-bar h1{font-family:var(--font-display);font-size:20px;font-weight:400;letter-spacing:-0.02em}
 #top-bar-actions{display:flex;gap:8px;align-items:center}
-.icon-btn{width:38px;height:38px;border-radius:50%;border:none;background:var(--surface);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm);transition:var(--tr);font-size:17px;-webkit-tap-highlight-color:transparent}
+.icon-btn{width:46px;height:46px;border-radius:50%;border:none;background:var(--surface);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm);transition:var(--tr);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.icon-btn svg{width:20px;height:20px;stroke-width:1.9}
 .icon-btn:active{transform:scale(0.92);background:var(--surface2)}
 
 /* date header */
 #date-header{text-align:center;padding:20px 0 8px}
+#month-navigation{display:flex;align-items:center;justify-content:center;gap:10px}
+#month-navigation .month-label{min-width:210px}
 #date-header .month-label{font-family:var(--font-display);font-size:28px;letter-spacing:-0.03em;line-height:1}
 #date-header .week-label{font-size:13px;color:var(--text2);margin-top:4px}
-#date-header .today-btn{display:inline-flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;color:var(--text2);font-family:var(--font-body);font-size:13px;padding:6px 12px;border-radius:999px;margin-top:6px;transition:var(--tr);-webkit-tap-highlight-color:transparent}
+#date-header .today-btn{min-height:44px;display:inline-flex;align-items:center;gap:7px;background:none;border:none;cursor:pointer;color:var(--text2);font-family:var(--font-body);font-size:13px;padding:8px 14px;border-radius:999px;margin-top:6px;transition:var(--tr);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+#date-header .today-btn svg{width:17px;height:17px}
 #date-header .today-btn:hover{background:var(--surface);color:var(--text)}
 #date-header .today-btn:active{transform:scale(0.95)}
 #date-header .today-btn.is-today{color:var(--accent);font-weight:500}
@@ -83,13 +89,17 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 
 /* cards */
 .budget-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.budget-card[hidden]{display:none!important}
 
 .card-header{padding:20px 20px 0;user-select:none;-webkit-tap-highlight-color:transparent}
 .card-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.card-title{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)}
+.card-title{font-size:12px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text2);display:inline-flex;align-items:center;gap:8px}
+.card-title svg{width:17px;height:17px;color:var(--accent);stroke-width:1.9}
 
 .card-nav{display:flex;align-items:center;gap:6px}
-.card-nav-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:var(--tr);-webkit-tap-highlight-color:transparent}
+#main-content .card-nav{display:none}
+.card-nav-btn{width:46px;height:46px;border-radius:50%;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--tr);-webkit-tap-highlight-color:transparent;touch-action:manipulation;box-shadow:var(--shadow-sm)}
+.card-nav-btn svg{width:21px;height:21px}
 .card-nav-btn:active{background:var(--surface2);transform:scale(0.9)}
 .card-period{font-size:12px;color:var(--text3);min-width:80px;text-align:center}
 
@@ -102,15 +112,20 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 .budget-meta{display:flex;flex-direction:column;align-items:flex-end;gap:2px;padding-bottom:4px}
 .budget-meta span{font-size:12px;color:var(--text3)}
 .budget-meta strong{font-size:14px;color:var(--text2);font-weight:500}
+.weekly-average{display:flex;align-items:center;gap:7px;margin-top:14px;color:var(--text2);font-size:12px}
+.weekly-average svg{width:15px;height:15px;color:var(--accent);flex:none}
+.weekly-average strong{color:var(--text);font-size:13px;font-weight:600}
 
 /* badge row with inline buttons */
 .card-badge-row{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-bottom:18px}
-.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;letter-spacing:0.04em;padding:3px 8px;border-radius:999px;transition:var(--tr-slow)}
+.status-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:0.03em;padding:6px 10px;border-radius:999px;transition:var(--tr-slow)}
 .status-badge.s-ok{background:var(--accent-light);color:var(--accent)}
 .status-badge.s-warn{background:var(--warn-light);color:var(--warn)}
 .status-badge.s-danger{background:var(--danger-light);color:var(--danger)}
-.card-btn-group{display:flex;gap:6px}
-.card-icon-btn{width:34px;height:34px;border-radius:var(--radius-xs);border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1;transition:var(--tr);-webkit-tap-highlight-color:transparent;flex-shrink:0}
+.card-btn-group{display:flex;gap:8px}
+.card-icon-btn{width:46px;height:46px;border-radius:12px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:var(--tr);-webkit-tap-highlight-color:transparent;flex-shrink:0;touch-action:manipulation}
+.card-icon-btn svg{width:20px;height:20px;stroke-width:2}
+.card-icon-btn.primary-action{background:var(--text);border-color:var(--text);color:#fff}
 .card-icon-btn:active{transform:scale(0.91);background:var(--surface2)}
 
 /* progress */
@@ -126,14 +141,17 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 .entries-inner{padding:8px 12px 12px}
 .entry-item{display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:var(--radius-xs);transition:background var(--tr);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .entry-item:hover{background:var(--surface2)}
-.entry-dot{width:8px;height:8px;border-radius:50%;background:var(--accent-mid);flex-shrink:0}
+.entry-brand{width:38px;height:38px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+.entry-brand img{width:30px;height:30px;object-fit:contain;display:block}
+.entry-brand svg{width:18px;height:18px;color:var(--text3);stroke-width:1.7}
 .entry-info{flex:1;min-width:0}
 .entry-title{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .entry-date{font-size:12px;color:var(--text3);margin-top:1px}
 .entry-amount{font-size:15px;font-weight:600;flex-shrink:0}
 .entry-actions{display:flex;gap:4px;opacity:0;transition:opacity var(--tr)}
 .entry-item:hover .entry-actions{opacity:1}
-.entry-btn{width:28px;height:28px;border:none;background:none;cursor:pointer;border-radius:var(--radius-xs);display:flex;align-items:center;justify-content:center;font-size:15px;transition:background var(--tr);color:var(--text2);-webkit-tap-highlight-color:transparent}
+.entry-btn{width:42px;height:42px;border:none;background:transparent;cursor:pointer;border-radius:var(--radius-xs);display:flex;align-items:center;justify-content:center;transition:background var(--tr);color:var(--text2);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.entry-btn svg{width:18px;height:18px}
 .entry-btn:hover{background:var(--border)}
 .entry-btn.delete:hover{background:var(--danger-light);color:var(--danger)}
 .empty-state{text-align:center;padding:28px 16px;color:var(--text3);font-size:13px}
@@ -142,7 +160,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 
 /* chips */
 .chips-wrap{display:flex;flex-wrap:wrap;gap:8px}
-.chip{height:36px;padding:0 14px;border-radius:999px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text2);font-family:var(--font-body);font-size:14px;font-weight:500;cursor:pointer;transition:all var(--tr);-webkit-tap-highlight-color:transparent;white-space:nowrap}
+.chip{min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text2);font-family:var(--font-body);font-size:14px;font-weight:500;cursor:pointer;transition:all var(--tr);-webkit-tap-highlight-color:transparent;white-space:nowrap;touch-action:manipulation}
+.chip{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.chip-logo{width:24px;height:24px;border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none}
+.chip-logo img{width:20px;height:20px;object-fit:contain;display:block}
 .chip:active{transform:scale(0.94)}
 .chip.selected{background:var(--text);color:#fff;border-color:var(--text)}
 .chip[data-custom="true"].selected{background:var(--accent);border-color:var(--accent)}
@@ -150,9 +171,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 
 /* buttons */
-.btn-primary{flex:1;height:42px;background:var(--text);color:#fff;border:none;border-radius:var(--radius-sm);font-family:var(--font-body);font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:var(--tr);-webkit-tap-highlight-color:transparent}
+.btn-primary{flex:1;min-height:50px;background:var(--text);color:#fff;border:none;border-radius:var(--radius-sm);font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:var(--tr);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .btn-primary:active{transform:scale(0.97);opacity:0.85}
-.btn-ghost{height:42px;padding:0 14px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:var(--tr);-webkit-tap-highlight-color:transparent;white-space:nowrap}
+.btn-ghost{min-height:48px;padding:0 16px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:var(--tr);-webkit-tap-highlight-color:transparent;white-space:nowrap;touch-action:manipulation}
 .btn-ghost:active{transform:scale(0.97);background:var(--border)}
 
 /* key screen */
@@ -165,6 +186,8 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 #key-input{height:52px;padding:0 18px;border:2px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:17px;letter-spacing:0.08em;text-align:center;color:var(--text);background:var(--surface);outline:none;transition:border-color var(--tr);width:100%}
 #key-input:focus{border-color:var(--text)}
 #key-submit{height:52px;background:var(--text);color:#fff;border:none;border-radius:var(--radius-sm);font-family:var(--font-body);font-size:16px;font-weight:600;cursor:pointer;transition:var(--tr);-webkit-tap-highlight-color:transparent}
+#key-submit{display:flex;align-items:center;justify-content:center;gap:8px;touch-action:manipulation}
+#key-submit svg{width:19px;height:19px}
 #key-submit:active{opacity:0.8;transform:scale(0.98)}
 .key-hint{font-size:12px;color:var(--text3);text-align:center}
 
@@ -177,7 +200,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 .settings-section{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm)}
 .settings-section-title{font-size:11px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:var(--text3);margin-bottom:16px}
 .settings-info{font-size:13px;color:var(--text2);background:var(--surface2);border-radius:var(--radius-xs);padding:10px 12px;line-height:1.5;margin-bottom:16px}
-.settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.settings-row{display:flex;align-items:center;justify-content:space-between;min-height:50px;padding:10px 0;border-bottom:1px solid var(--border)}
 .settings-row:last-child{border-bottom:none}
 .settings-row-label{font-size:14px;color:var(--text)}
 .settings-row-value{font-size:14px;color:var(--text2);font-weight:500}
@@ -205,7 +228,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 .sheet-body{padding:16px 24px 24px;display:flex;flex-direction:column;gap:14px}
 .form-group{display:flex;flex-direction:column;gap:6px}
 .form-label{font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3)}
-.form-input{width:100%;height:48px;padding:0 14px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:16px;color:var(--text);background:var(--surface);outline:none;transition:border-color var(--tr);-webkit-appearance:none}
+.form-input{width:100%;height:54px;padding:0 16px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:16px;color:var(--text);background:var(--surface);outline:none;transition:border-color var(--tr);-webkit-appearance:none}
 .form-input:focus{border-color:var(--text)}
 .form-input[type="number"]{-moz-appearance:textfield}
 .form-input[type="number"]::-webkit-outer-spin-button,.form-input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none}
@@ -222,7 +245,15 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 .sync-indicator{width:6px;height:6px;border-radius:50%;background:var(--accent-mid);animation:pulse 1.5s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
 .offline-notice{background:var(--warn-light);color:var(--warn);text-align:center;font-size:12px;padding:6px 16px;font-weight:500;display:none}
-.offline-notice.show{display:block}
+.offline-notice.show{display:flex;align-items:center;justify-content:center;gap:7px}
+.offline-notice svg{width:16px;height:16px;flex:none}
+.status-badge svg{width:14px;height:14px;stroke-width:2.2}
+.btn-primary svg,.btn-ghost svg{width:18px;height:18px}
+button:focus-visible,.chip:focus-visible,.form-input:focus-visible{outline:3px solid rgba(45,106,79,.22);outline-offset:2px}
+[data-budget-option]{width:22px;height:22px;accent-color:var(--accent)}
+.empty-state svg{width:30px;height:30px;margin-bottom:8px;color:var(--text3);stroke-width:1.5}
+@media (hover:none){.entry-actions{opacity:1}.entry-item{padding-block:12px}}
+@media (max-width:380px){#month-navigation .month-label{min-width:180px;font-size:25px}.budget-remaining{font-size:38px}.card-header{padding-inline:16px}}
 </style>
 </head>
 <body>
@@ -238,35 +269,38 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
   <p>Gebt euren gemeinsamen Haushaltsschlüssel ein, um loszulegen.</p>
   <div id="key-input-wrap">
     <input id="key-input" type="text" placeholder="z. B. familie2024" maxlength="40" autocomplete="off" spellcheck="false">
-    <button id="key-submit">Starten →</button>
+    <button id="key-submit">Starten <i data-lucide="arrow-right"></i></button>
   </div>
   <div class="key-hint">Der Schlüssel verbindet beide Geräte mit denselben Daten.<br>Klein, einfach, privat.</div>
 </div>
 
 <div id="app" style="display:none">
-  <div class="offline-notice" id="offline-notice">⚠ Keine Verbindung – Änderungen werden synchronisiert sobald du online bist</div>
+  <div class="offline-notice" id="offline-notice"><i data-lucide="wifi-off"></i> Keine Verbindung – Änderungen werden später synchronisiert</div>
 
   <div id="top-bar">
     <h1>Haushalt<em style="font-family:var(--font-display);font-style:italic;color:var(--accent)">buch</em></h1>
     <div id="top-bar-actions">
       <div class="sync-indicator" id="sync-dot"></div>
-      <button class="icon-btn" id="settings-btn">⚙</button>
+      <button class="icon-btn" id="settings-btn" aria-label="Einstellungen öffnen" title="Einstellungen"><i data-lucide="settings"></i></button>
     </div>
   </div>
 
   <div id="date-header">
-    <div class="month-label" id="header-month"></div>
-    <div class="week-label" id="header-week"></div>
-    <button class="today-btn" id="today-btn"><span>📅</span><span id="today-label"></span></button>
+    <div id="month-navigation">
+      <button class="card-nav-btn" id="global-month-prev" aria-label="Vorheriger Monat"><i data-lucide="chevron-left"></i></button>
+      <div class="month-label" id="header-month"></div>
+      <button class="card-nav-btn" id="global-month-next" aria-label="Nächster Monat"><i data-lucide="chevron-right"></i></button>
+    </div>
+    <button class="today-btn" id="today-btn"><i data-lucide="calendar-days"></i><span id="today-label"></span></button>
   </div>
 
   <div id="main-content">
 
-    <!-- Wochenbudget -->
-    <div class="budget-card" id="week-card">
-      <div class="card-header card-swipe-wrap" id="week-header">
+    <!-- Essensbudget -->
+    <div class="budget-card" id="food-card" data-budget-card="food">
+      <div class="card-header" id="food-header">
         <div class="card-title-row">
-          <span class="card-title">Wochenbudget</span>
+          <span class="card-title"><i data-lucide="shopping-basket"></i>Essensbudget</span>
           <div class="card-nav">
             <button class="card-nav-btn" id="week-prev">‹</button>
             <span class="card-period" id="week-period"></span>
@@ -280,11 +314,12 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
             <span>Ausgaben</span><strong id="week-spent">0,00 €</strong>
           </div>
         </div>
+        <div class="weekly-average"><i data-lucide="calendar-range"></i><span>pro Woche: <strong id="food-weekly-average">0,00 €</strong></span></div>
         <div class="card-badge-row">
-          <div class="status-badge s-ok" id="week-badge">✓ Im Rahmen</div>
+          <div class="status-badge s-ok" id="week-badge"><i data-lucide="circle-check"></i>Im Rahmen</div>
           <div class="card-btn-group">
-            <button class="card-icon-btn" id="week-add-btn" title="Einkauf hinzufügen">＋</button>
-            <button class="card-icon-btn" id="week-toggle-btn" title="Liste">📋</button>
+            <button class="card-icon-btn primary-action" id="week-add-btn" aria-label="Einkauf hinzufügen" title="Einkauf hinzufügen"><i data-lucide="plus"></i></button>
+            <button class="card-icon-btn" id="week-toggle-btn" aria-label="Einträge anzeigen" title="Einträge anzeigen"><i data-lucide="list"></i></button>
           </div>
         </div>
       </div>
@@ -293,10 +328,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
     </div>
 
     <!-- Ungeplante Ausgaben (DB: months) -->
-    <div class="budget-card" id="month-card">
-      <div class="card-header card-swipe-wrap" id="month-header">
+    <div class="budget-card" id="month-card" data-budget-card="monthly">
+      <div class="card-header" id="month-header">
         <div class="card-title-row">
-          <span class="card-title">Ungeplante Ausgaben</span>
+          <span class="card-title"><i data-lucide="receipt-text"></i>Ungeplante Ausgaben</span>
           <div class="card-nav">
             <button class="card-nav-btn" id="month-prev">‹</button>
             <span class="card-period" id="month-period"></span>
@@ -311,10 +346,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
           </div>
         </div>
         <div class="card-badge-row">
-          <div class="status-badge s-ok" id="month-badge">✓ Im Rahmen</div>
+          <div class="status-badge s-ok" id="month-badge"><i data-lucide="circle-check"></i>Im Rahmen</div>
           <div class="card-btn-group">
-            <button class="card-icon-btn" id="month-add-btn" title="Ausgabe hinzufügen">＋</button>
-            <button class="card-icon-btn" id="month-toggle-btn" title="Liste">📋</button>
+            <button class="card-icon-btn primary-action" id="month-add-btn" aria-label="Ausgabe hinzufügen" title="Ausgabe hinzufügen"><i data-lucide="plus"></i></button>
+            <button class="card-icon-btn" id="month-toggle-btn" aria-label="Einträge anzeigen" title="Einträge anzeigen"><i data-lucide="list"></i></button>
           </div>
         </div>
       </div>
@@ -323,10 +358,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
     </div>
 
     <!-- Tankbudget (DB: tanks) -->
-    <div class="budget-card" id="tank-card">
-      <div class="card-header card-swipe-wrap" id="tank-header">
+    <div class="budget-card" id="tank-card" data-budget-card="tank">
+      <div class="card-header" id="tank-header">
         <div class="card-title-row">
-          <span class="card-title">⛽ Tankbudget</span>
+          <span class="card-title"><i data-lucide="fuel"></i>Tankbudget</span>
           <div class="card-nav">
             <button class="card-nav-btn" id="tank-prev">‹</button>
             <span class="card-period" id="tank-period"></span>
@@ -341,10 +376,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
           </div>
         </div>
         <div class="card-badge-row">
-          <div class="status-badge s-ok" id="tank-badge">✓ Im Rahmen</div>
+          <div class="status-badge s-ok" id="tank-badge"><i data-lucide="circle-check"></i>Im Rahmen</div>
           <div class="card-btn-group">
-            <button class="card-icon-btn" id="tank-add-btn" title="Tankvorgang hinzufügen">＋</button>
-            <button class="card-icon-btn" id="tank-toggle-btn" title="Liste">📋</button>
+            <button class="card-icon-btn primary-action" id="tank-add-btn" aria-label="Tankvorgang hinzufügen" title="Tankvorgang hinzufügen"><i data-lucide="plus"></i></button>
+            <button class="card-icon-btn" id="tank-toggle-btn" aria-label="Einträge anzeigen" title="Einträge anzeigen"><i data-lucide="list"></i></button>
           </div>
         </div>
       </div>
@@ -353,10 +388,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
     </div>
 
     <!-- Junk Food (DB: junkfood) — kein Budget -->
-    <div class="budget-card" id="junk-card">
-      <div class="card-header card-swipe-wrap" id="junk-header">
+    <div class="budget-card" id="junk-card" data-budget-card="junk">
+      <div class="card-header" id="junk-header">
         <div class="card-title-row">
-          <span class="card-title">🍔 Junk Food</span>
+          <span class="card-title"><i data-lucide="sandwich"></i>Junk Food</span>
           <div class="card-nav">
             <button class="card-nav-btn" id="junk-prev">‹</button>
             <span class="card-period" id="junk-period"></span>
@@ -371,10 +406,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
           </div>
         </div>
         <div class="card-badge-row">
-          <div class="status-badge s-ok" id="junk-badge">🍔 Tracking</div>
+          <div class="status-badge s-ok" id="junk-badge"><i data-lucide="activity"></i>Tracking</div>
           <div class="card-btn-group">
-            <button class="card-icon-btn" id="junk-add-btn" title="Junk Food hinzufügen">＋</button>
-            <button class="card-icon-btn" id="junk-toggle-btn" title="Liste">📋</button>
+            <button class="card-icon-btn primary-action" id="junk-add-btn" aria-label="Junk Food hinzufügen" title="Junk Food hinzufügen"><i data-lucide="plus"></i></button>
+            <button class="card-icon-btn" id="junk-toggle-btn" aria-label="Einträge anzeigen" title="Einträge anzeigen"><i data-lucide="list"></i></button>
           </div>
         </div>
       </div>
@@ -387,7 +422,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 <!-- Settings -->
 <div id="settings-panel">
   <div class="settings-header">
-    <button class="icon-btn" id="settings-close">✕</button>
+    <button class="icon-btn" id="settings-close" aria-label="Einstellungen schließen"><i data-lucide="x"></i></button>
     <h2>Einstellungen</h2>
   </div>
   <div class="settings-body">
@@ -422,7 +457,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
       <div class="settings-section-title">Haushalt</div>
       <div class="settings-row"><span class="settings-row-label">Schlüssel</span><span class="household-key-display" id="household-key-display">—</span></div>
       <div style="height:14px"></div>
-      <button class="btn-ghost" id="change-key-btn" style="width:100%">🔑 Schlüssel ändern</button>
+      <button class="btn-ghost" id="change-key-btn" style="width:100%"><i data-lucide="key-round"></i>Schlüssel ändern</button>
     </div>
   </div>
 </div>
@@ -482,32 +517,48 @@ const PIN = "1234";
 const SETTINGS_PIN_ENABLED = true;
 
 const CHIPS = {
-  weekly:  ["Famila","Combi","Netto","Rewe","Lidl","Aldi","Amazon","Tedi","Sonstige"],
-  monthly: ["Amazon","Tedi","Sonstige"],
+  food:    ["Famila","Combi","Netto","Rewe","Lidl","Aldi","Amazon","Tedi","Sonstige"],
+  monthly: ["Amazon","Müller","Tedi","Sonstige"],
   tank:    ["Score","Jet","BFT","Avia","Aral","Esso","Sonstige"],
   junk:    ["Lieferando","McDonald's","Burger King","Pizza Hut","Sonstige"],
 };
 
+const BRAND_LOGOS = {
+  aldi:"public/aldi.svg",
+  amazon:"public/amazon.svg",
+  combi:"public/combi.svg",
+  famila:"public/famila.png",
+  mueller:"public/mueller.svg",
+  netto:"public/netto.svg",
+  rewe:"public/rewe.svg",
+  lidl:"public/lidl.svg",
+  tedi:"public/tedi.svg",
+};
+function brandKey(value){return String(value||"").trim().toLowerCase().replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss")}
+function brandLogo(value){return BRAND_LOGOS[brandKey(value)]||null}
+function brandMarkup(value,context,type){const logo=brandLogo(value);if(logo)return context==="chip"?`<span class="chip-logo"><img src="${logo}" alt=""></span>`:`<span class="entry-brand"><img src="${logo}" alt="" loading="lazy" decoding="async"></span>`;const icon={food:"shopping-basket",monthly:"receipt-text",tank:"fuel",junk:"sandwich"}[type]||"receipt-text";return context==="chip"?"":`<span class="entry-brand"><i data-lucide="${icon}"></i></span>`}
+
 const SHEET_TITLES = {weekly:"Einkauf hinzufügen",monthly:"Ausgabe hinzufügen",tank:"Tankvorgang hinzufügen",junk:"Junk Food hinzufügen"};
-const EMPTY_ICONS  = {weekly:"🛒",monthly:"🛍",tank:"⛽",junk:"🍔"};
+const EMPTY_ICONS  = {weekly:"shopping-basket",monthly:"receipt-text",tank:"fuel",junk:"sandwich"};
 const EMPTY_TEXTS  = {weekly:"Noch keine Einkäufe",monthly:"Noch keine Ausgaben",tank:"Noch keine Tankvorgänge",junk:"Noch kein Junk Food"};
 
 let householdKey = "";
 let fbListeners  = [];
 
 let state = {
-  currentWeekStart: null,
   currentMonthKey: "",
-  weekEntriesOpen: false,
-  monthEntriesOpen: false,
-  tankEntriesOpen: false,
-  junkEntriesOpen: false,
+  foodEntriesOpen: true,
+  monthEntriesOpen: true,
+  tankEntriesOpen: true,
+  junkEntriesOpen: true,
 };
 
 let data = {
-  settings: { weeklyBudgetDefault:200, monthlyBudgetDefault:100, tankBudgetDefault:300 },
-  weeks: {}, months: {}, tanks: {}, junkfood: {},
+  settings: { foodBudgetDefault:400, monthlyBudgetDefault:100, tankBudgetDefault:300, junkBudgetDefault:100 },
+  food: {}, months: {}, tanks: {}, junkfood: {},
 };
+EMPTY_ICONS.food="shopping-basket";
+EMPTY_TEXTS.food="Noch keine Einkäufe";
 
 /* ── Date helpers ── */
 const pad = n => String(n).padStart(2,"0");
@@ -540,9 +591,9 @@ function weekLabel(mon){return`KW ${getWeekCW(mon)} · ${fmtDate(mon)} – ${fmt
 
 /* ── Budget logic ── */
 function calcSt(rem,tot){if(tot<=0)return"ok";if(rem<=0)return"danger";if(rem/tot<=0.20)return"warn";return"ok"}
-function stLabel(rem,tot){const s=calcSt(rem,tot);return s==="danger"?"⚠ Überzogen":s==="warn"?"⚡ Fast aufgebraucht":"✓ Im Rahmen"}
+function stLabel(rem,tot){const s=calcSt(rem,tot);return s==="danger"?"Überzogen":s==="warn"?"Fast aufgebraucht":"Im Rahmen"}
 function sumE(entries){if(!entries)return 0;return Object.values(entries).reduce((a,e)=>a+Number(e.amount||0),0)}
-function ensureWeek(k,mon){if(!data.weeks[k])data.weeks[k]={budget:data.settings.weeklyBudgetDefault,startDate:isoDate(mon),endDate:isoDate(addDays(mon,6)),entries:{}}}
+function ensureFood(k){if(!data.food[k])data.food[k]={budget:data.settings.foodBudgetDefault,month:k,entries:{}}}
 function ensureMonth(k){if(!data.months[k])data.months[k]={budget:data.settings.monthlyBudgetDefault,month:k,entries:{}}}
 function ensureTank(k){if(!data.tanks[k])data.tanks[k]={budget:data.settings.tankBudgetDefault,month:k,entries:{}}}
 function ensureJunk(k){if(!data.junkfood[k])data.junkfood[k]={month:k,entries:{}}}
@@ -619,32 +670,35 @@ function setBudget(pfx,rem,budget,st,spent){
   $(pfx+"-remaining").className=`budget-remaining s-${st}`;
   $(pfx+"-total-budget").textContent=fmtMoney(budget);
   $(pfx+"-spent").textContent=fmtMoney(spent);
-  $(pfx+"-badge").textContent=stLabel(rem,budget);
+  const statusIcon=st==="danger"?"triangle-alert":st==="warn"?"clock-3":"circle-check";
+  $(pfx+"-badge").innerHTML=`<i data-lucide="${statusIcon}"></i>${stLabel(rem,budget)}`;
   $(pfx+"-badge").className=`status-badge s-${st}`;
   $(pfx+"-progress").style.width=`${pct}%`;
   $(pfx+"-progress").className=`progress-bar s-${st}`;
+  refreshIcons();
 }
 
 function renderEntries(cid,entries,type){
   const c=$(cid),list=Object.values(entries).sort((a,b)=>b.date.localeCompare(a.date));
-  if(!list.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">${EMPTY_ICONS[type]}</div>${EMPTY_TEXTS[type]}</div>`;return}
+  if(!list.length){c.innerHTML=`<div class="empty-state"><i data-lucide="${EMPTY_ICONS[type]}"></i><div>${EMPTY_TEXTS[type]}</div></div>`;refreshIcons();return}
   let html="",ld="";
   for(const e of list){
     if(e.date!==ld){ld=e.date;html+=`<div class="entries-date-divider">${fmtDate(e.date,{weekday:"short",day:"numeric",month:"short"})}</div>`}
     html+=`<div class="entry-item" data-id="${e.id}" data-type="${type}">
-      <div class="entry-dot"></div>
+      ${brandMarkup(e.title,"entry",type)}
       <div class="entry-info"><div class="entry-title">${esc(e.title)}</div><div class="entry-date">${fmtDate(e.date)}</div></div>
       <div class="entry-amount">${fmtMoney(e.amount)}</div>
       <div class="entry-actions">
-        <button class="entry-btn edit" data-id="${e.id}" data-type="${type}">✎</button>
-        <button class="entry-btn delete" data-id="${e.id}" data-type="${type}">✕</button>
+        <button class="entry-btn edit" aria-label="Eintrag bearbeiten" title="Bearbeiten" data-id="${e.id}" data-type="${type}"><i data-lucide="pencil"></i></button>
+        <button class="entry-btn delete" aria-label="Eintrag löschen" title="Löschen" data-id="${e.id}" data-type="${type}"><i data-lucide="trash-2"></i></button>
       </div></div>`;
   }
-  c.innerHTML=html;
+  c.innerHTML=html;refreshIcons();
 }
 
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 function $(id){return document.getElementById(id)}
+function refreshIcons(){if(window.lucide)window.lucide.createIcons({attrs:{"aria-hidden":"true"}})}
 
 function updateSettingsDisplay(){
   const s=data.settings;
@@ -664,7 +718,7 @@ function closeSheet(){$("sheet-overlay").classList.remove("open");$("entry-sheet
 function buildChips(type){
   const labels={weekly:"Wo eingekauft?",monthly:"Kategorie",tank:"Tankstelle",junk:"Restaurant / Lieferdienst"};
   $("chips-label").textContent=labels[type]||"Kategorie";
-  $("shop-chips").innerHTML=CHIPS[type].map(v=>`<button class="chip" data-value="${v}"${v==="Sonstige"?' data-custom="true"':''}>${v}</button>`).join("");
+  $("shop-chips").innerHTML=CHIPS[type].map(v=>`<button class="chip" data-value="${v}"${v==="Sonstige"?' data-custom="true"':''}>${brandMarkup(v,"chip",type)}<span>${v}</span></button>`).join("");
 }
 
 function resetChips(){
@@ -765,7 +819,7 @@ function saveUI(){
 function toggleEntries(pfx){
   const k=pfx+"EntriesOpen";state[k]=!state[k];
   $(pfx+"-entries").classList.toggle("open",state[k]);
-  $(pfx+"-toggle-btn").textContent=state[k]?"🗂":"📋";
+  const btn=$(pfx+"-toggle-btn");btn.innerHTML=`<i data-lucide="${state[k]?"list-collapse":"list"}"></i>`;btn.setAttribute("aria-label",state[k]?"Einträge ausblenden":"Einträge anzeigen");refreshIcons();
 }
 
 /* ── Swipe ── */
@@ -802,11 +856,12 @@ async function saveSettings(){
 }
 function buildPinGrid(){
   const g=$("pin-grid");
-  g.innerHTML=["1","2","3","4","5","6","7","8","9","","0","⌫"].map(k=>k?`<button class="pin-key${k==="⌫"?" backspace":""}" data-k="${k}">${k}</button>`:`<div></div>`).join("");
+  g.innerHTML=["1","2","3","4","5","6","7","8","9","","0","⌫"].map(k=>k?`<button class="pin-key${k==="⌫"?" backspace":""}" aria-label="${k==="⌫"?"Letzte Ziffer löschen":k}" data-k="${k}">${k==="⌫"?'<i data-lucide="delete"></i>':k}</button>`:`<div></div>`).join("");
   g.querySelectorAll(".pin-key").forEach(b=>b.addEventListener("click",()=>{
     if(b.dataset.k==="⌫")pinBuf=pinBuf.slice(0,-1);else if(pinBuf.length<4)pinBuf+=b.dataset.k;
     updatePinDots();if(pinBuf.length===4)setTimeout(checkPin,150);
   }));
+  refreshIcons();
 }
 function updatePinDots(){for(let i=0;i<4;i++)$(`pd${i}`).classList.toggle("filled",i<pinBuf.length)}
 function checkPin(){
@@ -899,6 +954,44 @@ function bindEvents(){
 
   window.addEventListener("online",()=>$("offline-notice").classList.remove("show"));
   window.addEventListener("offline",()=>$("offline-notice").classList.add("show"));
+}
+
+/* Monatsbudget-Umstellung */
+function cookieValue(name){return document.cookie.split("; ").find(v=>v.startsWith(name+"="))?.split("=")[1]}
+function normalizeActiveBudgets(value){if(Array.isArray(value))return value;if(value&&typeof value==="object")return Object.keys(value).filter(key=>value[key]);return ["food","monthly","tank","junk"]}
+function activeBudgets(){if(data.settings.activeBudgets)return normalizeActiveBudgets(data.settings.activeBudgets);try{return normalizeActiveBudgets(JSON.parse(decodeURIComponent(cookieValue("activeBudgets")||localStorage.getItem("activeBudgets")||"")))}catch{return ["food","monthly","tank","junk"]}}
+function applyBudgetVisibility(active=activeBudgets()){document.querySelectorAll("[data-budget-card]").forEach(card=>{card.style.display=active.includes(card.dataset.budgetCard)?"":"none"})}
+
+function renderDateHeader(){
+  const today=new Date(),mk=state.currentMonthKey;
+  $("header-month").textContent=mlLong(mk);
+  $("today-label").textContent=`Heute, ${fmtDate(today,{day:"numeric",month:"long"})}`;
+  $("today-btn").classList.toggle("is-today",mk===getMonthKey(today));
+}
+function renderFoodCard(){const mk=state.currentMonthKey;ensureFood(mk);const m=data.food[mk],spent=sumE(m.entries),budget=m.budget,remaining=budget-spent,[year,month]=mk.split("-").map(Number),daysInMonth=new Date(year,month,0).getDate(),weeklyAverage=remaining/daysInMonth*7;setBudget("food",remaining,budget,calcSt(remaining,budget),spent);$("food-weekly-average").textContent=fmtMoney(weeklyAverage);renderEntries("food-entries-inner",m.entries||{},"food")}
+function renderMonthCard(){const mk=state.currentMonthKey;ensureMonth(mk);const m=data.months[mk],spent=sumE(m.entries),budget=m.budget;setBudget("month",budget-spent,budget,calcSt(budget-spent,budget),spent);renderEntries("month-entries-inner",m.entries||{},"monthly")}
+function renderTankCard(){const mk=state.currentMonthKey;ensureTank(mk);const m=data.tanks[mk],spent=sumE(m.entries),budget=m.budget;setBudget("tank",budget-spent,budget,calcSt(budget-spent,budget),spent);renderEntries("tank-entries-inner",m.entries||{},"tank")}
+function renderJunkCard(){const mk=state.currentMonthKey;ensureJunk(mk);const m=data.junkfood[mk],total=sumE(m.entries),count=Object.keys(m.entries||{}).length;$("junk-total").textContent=fmtMoney(total);$("junk-total").className="budget-remaining s-ok";$("junk-count").textContent=count;renderEntries("junk-entries-inner",m.entries||{},"junk")}
+function renderAll(){renderDateHeader();renderFoodCard();renderMonthCard();renderTankCard();renderJunkCard();applyBudgetVisibility()}
+function subscribe(){stopListeners();fbListen("settings",v=>{if(v){data.settings={...data.settings,...v};updateSettingsDisplay()}renderAll()});fbListen("food",v=>{data.food=v||{};renderFoodCard()});fbListen("months",v=>{data.months=v||{};renderMonthCard()});fbListen("tanks",v=>{data.tanks=v||{};renderTankCard()});fbListen("junkfood",v=>{data.junkfood=v||{};renderJunkCard()})}
+function getEntries(type){const paths={food:data.food,monthly:data.months,tank:data.tanks,junk:data.junkfood};return paths[type]?.[state.currentMonthKey]?.entries||{}}
+function openEditEntry(id,type){const e=getEntries(type)[id];if(!e)return;$("entry-id").value=id;$("entry-type").value=type;$("entry-source-key").value=state.currentMonthKey;$("entry-amount-input").value=fmtMoneyIn(e.amount);$("entry-date-input").value=e.date;$("entry-sheet-title").textContent="Eintrag bearbeiten";$("chips-group").style.display="none";const group=$("title-group");group.style.display="";group.classList.add("visible");$("entry-title-input").value=e.title;openSheet()}
+function openAddEntry(type){$("entry-id").value="";$("entry-type").value=type;$("entry-source-key").value="";$("entry-amount-input").value="";$("entry-date-input").value=isoDate(new Date());$("entry-sheet-title").textContent={food:"Einkauf hinzufügen",monthly:"Ausgabe hinzufügen",tank:"Tankvorgang hinzufügen",junk:"Junk Food hinzufügen"}[type];$("chips-group").style.display="";buildChips(type);resetChips();openSheet()}
+async function saveEntry(){const id=$("entry-id").value,type=$("entry-type").value,sourceKey=$("entry-source-key").value,title=$("entry-title-input").value.trim(),amount=parseFloat($("entry-amount-input").value.replace(",",".")),date=$("entry-date-input").value;if(!title||!amount||amount<=0||!date){showToast("Bitte alle Angaben ausfüllen");return}const targetKey=getMonthKey(parseIso(date)),map={food:["food","foodBudgetDefault"],monthly:["months","monthlyBudgetDefault"],tank:["tanks","tankBudgetDefault"],junk:["junkfood","junkBudgetDefault"]},[path,setting]=map[type],now=new Date().toISOString(),eid=id||("e"+Date.now()),entry={id:eid,type,title,amount:Number(amount),date,createdAt:id?(getEntries(type)[id]?.createdAt||now):now,...(id?{updatedAt:now}:{})};try{await fbEnsure(`${path}/${targetKey}`,{budget:Number(data.settings[setting])||0,month:targetKey,entries:{}});await fbSet(`${path}/${targetKey}/entries/${eid}`,entry);if(id&&sourceKey&&sourceKey!==targetKey)await fbDel(`${path}/${sourceKey}/entries/${eid}`);closeSheet();showToast(id?"Eintrag aktualisiert":"Eintrag gespeichert")}catch{showToast("Fehler beim Speichern")}}
+async function deleteEntry(id,type){if(!confirm("Eintrag wirklich löschen?"))return;const path={food:"food",monthly:"months",tank:"tanks",junk:"junkfood"}[type];try{await fbDel(`${path}/${state.currentMonthKey}/entries/${id}`);showToast("Eintrag gelöscht")}catch{showToast("Fehler beim Löschen")}}
+function goToMonth(mk){state.currentMonthKey=mk;renderAll();localStorage.setItem("ui_monthKey",mk)}
+function initState(){state.currentMonthKey=getMonthKey(new Date())}
+function updateSettingsDisplay(){const s=data.settings;$("current-week-budget-display").textContent=fmtMoney(s.foodBudgetDefault);$("current-month-budget-display").textContent=fmtMoney(s.monthlyBudgetDefault);$("current-tank-budget-display").textContent=fmtMoney(s.tankBudgetDefault);$("household-key-display").textContent=householdKey;$("setting-week-budget").placeholder=s.foodBudgetDefault;$("setting-month-budget").placeholder=s.monthlyBudgetDefault;$("setting-tank-budget").placeholder=s.tankBudgetDefault}
+function addBudgetOptions(){if($("budget-options"))return;$("setting-week-budget").previousElementSibling.textContent="Essensbudget / Monat (€)";$("current-week-budget-display").closest(".settings-row").firstElementChild.textContent="Essensbudget";$("setting-tank-budget").closest(".settings-section").insertAdjacentHTML("afterend",'<div class="settings-section" id="budget-options"><div class="settings-section-title">Sichtbare Bereiche</div><div class="settings-info">Diese Auswahl gilt für den gesamten Haushalt.</div></div>');const box=$("budget-options"),active=activeBudgets();[["food","Essen"],["monthly","Ungeplante Ausgaben"],["tank","Tanken"],["junk","Junk Food (Tracking)"]].forEach(([key,label])=>box.insertAdjacentHTML("beforeend",`<label class="settings-row"><span class="settings-row-label">${label}</span><input type="checkbox" data-budget-option="${key}" ${active.includes(key)?"checked":""}></label>`))}
+function openSettings(){$("pin-overlay").classList.remove("open");$("settings-panel").classList.add("open");addBudgetOptions();["week","month","tank"].forEach(k=>{$("setting-"+k+"-budget").value=""});const active=activeBudgets();document.querySelectorAll("[data-budget-option]").forEach(input=>input.checked=active.includes(input.dataset.budgetOption));updateSettingsDisplay()}
+async function saveSettings(){const f=parseFloat($("setting-week-budget").value),m=parseFloat($("setting-month-budget").value),t=parseFloat($("setting-tank-budget").value),active=[...document.querySelectorAll("[data-budget-option]:checked")].map(input=>input.dataset.budgetOption),activeMap=Object.fromEntries(["food","monthly","tank","junk"].map(key=>[key,active.includes(key)])),u={...data.settings,activeBudgets:activeMap};if(f>0)u.foodBudgetDefault=f;if(m>0)u.monthlyBudgetDefault=m;if(t>0)u.tankBudgetDefault=t;try{await fbSet("settings",u);data.settings=u;localStorage.setItem("activeBudgets",JSON.stringify(active));applyBudgetVisibility(active);updateSettingsDisplay();showToast("Einstellungen gespeichert")}catch(err){console.error(err);showToast(`Speichern fehlgeschlagen: ${err?.code||"Verbindung prüfen"}`)}}
+function bindEvents(){
+  ["remaining","total-budget","spent","badge","progress","add-btn","toggle-btn","entries","entries-inner"].forEach(s=>{const el=$("week-"+s);if(el)el.id="food-"+s});
+  ["food","month","tank","junk"].forEach(prefix=>{const entries=$(prefix+"-entries"),button=$(prefix+"-toggle-btn");entries.classList.add("open");button.innerHTML='<i data-lucide="list-collapse"></i>';button.setAttribute("aria-label","Einträge ausblenden")});refreshIcons();
+  $("key-submit").addEventListener("click",()=>{const value=$("key-input").value.trim().toLowerCase().replace(/\s+/g,"-");if(!value){showToast("Bitte Schlüssel eingeben");return}startApp(value)});$("key-input").addEventListener("keydown",event=>{if(event.key==="Enter")$("key-submit").click()});
+  $("global-month-prev").addEventListener("click",()=>goToMonth(prevMK(state.currentMonthKey)));$("global-month-next").addEventListener("click",()=>goToMonth(nextMK(state.currentMonthKey)));$("today-btn").addEventListener("click",()=>goToMonth(getMonthKey(new Date())));
+  [["food","food"],["month","monthly"],["tank","tank"],["junk","junk"]].forEach(([p,type])=>{$(p+"-add-btn").addEventListener("click",()=>openAddEntry(type));$(p+"-toggle-btn").addEventListener("click",()=>toggleEntries(p));$(p+"-entries-inner").addEventListener("click",e=>{const b=e.target.closest(".entry-btn"),r=e.target.closest(".entry-item");if(b?.classList.contains("delete"))deleteEntry(b.dataset.id,b.dataset.type);else if(b?.classList.contains("edit")||r)openEditEntry((b||r).dataset.id,(b||r).dataset.type)})});
+  $("shop-chips").addEventListener("click",e=>{const c=e.target.closest(".chip");if(c)selectChip(c.dataset.value)});$("entry-cancel-btn").addEventListener("click",closeSheet);$("sheet-overlay").addEventListener("click",closeSheet);$("entry-save-btn").addEventListener("click",saveEntry);$("settings-btn").addEventListener("click",openSettingsWithPin);$("settings-close").addEventListener("click",()=>$("settings-panel").classList.remove("open"));$("save-settings-btn").addEventListener("click",saveSettings);$("change-key-btn").addEventListener("click",()=>{if(!confirm("Schlüssel wirklich ändern? Die App wird neu geladen."))return;localStorage.removeItem("householdKey");location.reload()});buildPinGrid();$("pin-cancel").addEventListener("click",()=>$("pin-overlay").classList.remove("open"));window.addEventListener("online",()=>$("offline-notice").classList.remove("show"));window.addEventListener("offline",()=>$("offline-notice").classList.add("show"));
 }
 
 document.addEventListener("DOMContentLoaded",()=>{
