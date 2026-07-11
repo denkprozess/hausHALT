@@ -611,6 +611,24 @@ async function fbEnsure(p,initial){
 function fbListen(p,cb){if(DEMO_MODE)return;const r=fbR(dbP(p));window.__FB.onValue(r,s=>cb(s.exists()?s.val():null));fbListeners.push({r})}
 function stopListeners(){fbListeners.forEach(({r})=>window.__FB.off(r));fbListeners=[]}
 
+async function migrateLegacyWeeksToFood(){
+  if(DEMO_MODE||await fbGet("migrations/weeksToFoodV1"))return 0;
+  const weeks=await fbGet("weeks")||{};
+  let migrated=0;
+  for(const week of Object.values(weeks)){
+    for(const [entryKey,legacyEntry] of Object.entries(week?.entries||{})){
+      const date=legacyEntry?.date||week?.startDate;
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date||""))continue;
+      const monthKey=date.slice(0,7),entryId=legacyEntry.id||entryKey;
+      await fbEnsure(`food/${monthKey}`,{budget:Number(data.settings.foodBudgetDefault)||400,month:monthKey,entries:{}});
+      await fbEnsure(`food/${monthKey}/entries/${entryId}`,{...legacyEntry,id:entryId,type:"food",date});
+      migrated++;
+    }
+  }
+  await fbSet("migrations/weeksToFoodV1",{completedAt:new Date().toISOString(),entryCount:migrated});
+  return migrated;
+}
+
 function subscribe(){
   stopListeners();
   fbListen("settings",v=>{if(v){data.settings={...data.settings,...v};updateSettingsDisplay()}renderAll()});
@@ -889,7 +907,10 @@ async function startApp(key){
   }
   const es=await fbGet("settings");
   if(!es)await fbSet("settings",data.settings);else data.settings={...data.settings,...es};
+  let migrated=0;
+  try{migrated=await migrateLegacyWeeksToFood()}catch(err){console.error("Migration der Wocheneinträge fehlgeschlagen",err)}
   subscribe();fadeOutLoading();
+  if(migrated)setTimeout(()=>showToast(`${migrated} alte Einkäufe übernommen`),600);
 }
 
 function fadeOutLoading(){const l=$("loading-overlay");l.classList.add("fade-out");setTimeout(()=>l.style.display="none",500)}
@@ -968,7 +989,7 @@ function renderDateHeader(){
   $("today-label").textContent=`Heute, ${fmtDate(today,{day:"numeric",month:"long"})}`;
   $("today-btn").classList.toggle("is-today",mk===getMonthKey(today));
 }
-function renderFoodCard(){const mk=state.currentMonthKey;ensureFood(mk);const m=data.food[mk],spent=sumE(m.entries),budget=m.budget,remaining=budget-spent,[year,month]=mk.split("-").map(Number),daysInMonth=new Date(year,month,0).getDate(),weeklyAverage=remaining/daysInMonth*7;setBudget("food",remaining,budget,calcSt(remaining,budget),spent);$("food-weekly-average").textContent=fmtMoney(weeklyAverage);renderEntries("food-entries-inner",m.entries||{},"food")}
+function renderFoodCard(){const mk=state.currentMonthKey;ensureFood(mk);const m=data.food[mk],spent=sumE(m.entries),budget=m.budget,remaining=budget-spent,[year,month]=mk.split("-").map(Number),daysInMonth=new Date(year,month,0).getDate(),today=new Date(),todayKey=getMonthKey(today);let remainingDays=daysInMonth;if(mk===todayKey)remainingDays=daysInMonth-today.getDate()+1;if(mk<todayKey)remainingDays=0;setBudget("food",remaining,budget,calcSt(remaining,budget),spent);$("food-weekly-average").textContent=remainingDays?fmtMoney(remaining/remainingDays*7):"—";renderEntries("food-entries-inner",m.entries||{},"food")}
 function renderMonthCard(){const mk=state.currentMonthKey;ensureMonth(mk);const m=data.months[mk],spent=sumE(m.entries),budget=m.budget;setBudget("month",budget-spent,budget,calcSt(budget-spent,budget),spent);renderEntries("month-entries-inner",m.entries||{},"monthly")}
 function renderTankCard(){const mk=state.currentMonthKey;ensureTank(mk);const m=data.tanks[mk],spent=sumE(m.entries),budget=m.budget;setBudget("tank",budget-spent,budget,calcSt(budget-spent,budget),spent);renderEntries("tank-entries-inner",m.entries||{},"tank")}
 function renderJunkCard(){const mk=state.currentMonthKey;ensureJunk(mk);const m=data.junkfood[mk],total=sumE(m.entries),count=Object.keys(m.entries||{}).length;$("junk-total").textContent=fmtMoney(total);$("junk-total").className="budget-remaining s-ok";$("junk-count").textContent=count;renderEntries("junk-entries-inner",m.entries||{},"junk")}
